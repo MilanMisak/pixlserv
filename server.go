@@ -31,19 +31,16 @@ func main() {
 		if err != "" {
 			return http.StatusBadRequest, err
 		}
+		log.Println("Parameters:")
 		log.Println(parameters)
 		imagePath := params["_1"]
 
 		if _, err := os.Stat(LOCAL_IMAGES_PATH + "/" + imagePath); os.IsNotExist(err) {
 			return http.StatusNotFound, "Image not found: " + imagePath
 		} else {
-			reader, err := os.Open(LOCAL_IMAGES_PATH + "/" + imagePath)
-			if err != nil {
-				return http.StatusInternalServerError, "Cannot open image"
-			}
-			image, format, err := image.Decode(reader)
-			if err != nil {
-				return http.StatusInternalServerError, "Cannot decode image"
+			image, format, e := readImage(imagePath)
+			if e != "" {
+				return http.StatusInternalServerError, e
 			}
 
 			// TODO - magic
@@ -59,6 +56,20 @@ func main() {
 		}
 	})
 	m.Run()
+}
+
+// Reads an image at the given path, returns an image instance,
+// format string and an error
+func readImage(imagePath string) (image.Image, string, string) {
+	reader, err := os.Open(LOCAL_IMAGES_PATH + "/" + imagePath)
+	if err != nil {
+		return nil, "", "Cannot open image"
+	}
+	image, format, err := image.Decode(reader)
+	if err != nil {
+		return nil, "", "Cannot decode image"
+	}
+	return image, format, ""
 }
 
 // Turns a string like "w_400,h_300" into a map[w:400 h:300]
