@@ -12,6 +12,7 @@ import (
 	"strconv"
 
 	"github.com/codegangsta/martini"
+	"github.com/nfnt/resize"
 )
 
 const (
@@ -38,18 +39,24 @@ func main() {
 		if _, err := os.Stat(LOCAL_IMAGES_PATH + "/" + imagePath); os.IsNotExist(err) {
 			return http.StatusNotFound, "Image not found: " + imagePath
 		} else {
-			image, format, e := readImage(imagePath)
+			img, format, e := readImage(imagePath)
 			if e != "" {
 				return http.StatusInternalServerError, e
 			}
 
 			// TODO - magic
 
+			// The values have been validated
+			width, _  := strconv.Atoi(parameters["w"])
+			height, _ := strconv.Atoi(parameters["h"])
+
+			imgNew := resize.Resize(uint(width), uint(height), img, resize.Bilinear)
+
 			var buffer bytes.Buffer
 			if format == "jpeg" {
-				jpeg.Encode(&buffer, image, nil)
+				jpeg.Encode(&buffer, imgNew, nil)
 			} else {
-				png.Encode(&buffer, image)
+				png.Encode(&buffer, imgNew)
 			}
 
 			return http.StatusOK, buffer.String()
@@ -65,11 +72,11 @@ func readImage(imagePath string) (image.Image, string, string) {
 	if err != nil {
 		return nil, "", "Cannot open image"
 	}
-	image, format, err := image.Decode(reader)
+	img, format, err := image.Decode(reader)
 	if err != nil {
 		return nil, "", "Cannot decode image"
 	}
-	return image, format, ""
+	return img, format, ""
 }
 
 // Turns a string like "w_400,h_300" into a map[w:400 h:300]
