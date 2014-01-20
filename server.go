@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"image"
+    "image/draw"
 	"image/jpeg"
 	"image/png"
 	"log"
@@ -26,7 +27,6 @@ func main() {
 	// Set up logging
 	log.SetPrefix("[pixlserv] ")
 	log.SetFlags(0)  // Removed the timestamp
-	log.Println("Test")
 
 	// Run the server
 	m := martini.Classic()
@@ -54,9 +54,9 @@ func main() {
 			height, _ := strconv.Atoi(parameters["h"])
 
 			var imgNew image.Image
+            // TODO - keep these as ints
 			imgWidth  := float32(img.Bounds().Dx())
 			imgHeight := float32(img.Bounds().Dy())
-			log.Println(imgWidth, imgHeight)
 
 			// Resize and crop
 			switch parameters["c"] {
@@ -71,8 +71,22 @@ func main() {
 					imgNew = resize.Resize(uint(width), 0, img, resize.Bilinear)
 				}
 			case "p":
-				// TODO
-				imgNew = resize.Resize(uint(width), uint(height), img, resize.Bilinear)
+				// Use the top left part of the image for now
+                var croppedRect image.Rectangle
+				if float32(width) * (imgHeight / imgWidth) > float32(height) {
+					// Whole width displayed
+                    newHeight := int((imgWidth / float32(width)) * float32(height))
+                    croppedRect = image.Rect(0, 0, int(imgWidth), newHeight)
+				} else {
+					// Whole height displayed
+                    newWidth := int((imgHeight / float32(height)) * float32(width))
+                    croppedRect = image.Rect(0, 0, newWidth, int(imgHeight))
+				}
+
+                imgDraw := image.NewRGBA(croppedRect)
+                // TODO - gravity
+                draw.Draw(imgDraw, croppedRect, img, image.Point{0, 0}, draw.Src)
+                imgNew = resize.Resize(uint(width), uint(height), imgDraw, resize.Bilinear)
 			case "k":
 				// TODO
 				imgNew = resize.Resize(uint(width), uint(height), img, resize.Bilinear)
@@ -95,6 +109,8 @@ func main() {
 // format string and an error
 func readImage(imagePath string) (image.Image, string, string) {
 	reader, err := os.Open(LOCAL_IMAGES_PATH + "/" + imagePath)
+    defer reader.Close()
+
 	if err != nil {
 		return nil, "", "Cannot open image"
 	}
@@ -102,7 +118,6 @@ func readImage(imagePath string) (image.Image, string, string) {
 	if err != nil {
 		return nil, "", "Cannot decode image"
 	}
-
 	return img, format, ""
 }
 
