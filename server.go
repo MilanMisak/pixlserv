@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 
 	"github.com/codegangsta/martini"
 	"github.com/nfnt/resize"
@@ -47,8 +46,8 @@ func main() {
 			// TODO - magic
 
 			// The values have been validated
-			width, _ := strconv.Atoi(parameters["w"])
-			height, _ := strconv.Atoi(parameters["h"])
+			width, _ := strconv.Atoi(parameters[PARAMETER_WIDTH])
+			height, _ := strconv.Atoi(parameters[PARAMETER_HEIGHT])
 
 			var imgNew image.Image
 			// TODO - keep these as ints
@@ -56,7 +55,7 @@ func main() {
 			imgHeight := float32(img.Bounds().Dy())
 
 			// Resize and crop
-			switch parameters["c"] {
+			switch parameters[PARAMETER_CROPPING] {
 			case CROPPING_MODE_EXACT:
 				imgNew = resize.Resize(uint(width), uint(height), img, resize.Bilinear)
 			case CROPPING_MODE_ALL:
@@ -116,41 +115,4 @@ func readImage(imagePath string) (image.Image, string, string) {
 		return nil, "", "Cannot decode image"
 	}
 	return img, format, ""
-}
-
-// Turns a string like "w_400,h_300" into a map[w:400 h:300]
-// The second return value is an error message
-// Also validates the parameters to make sure they have valid values
-// w = width, h = height
-func parseParameters(parametersStr string) (map[string]string, string) {
-	parameters := make(map[string]string)
-	parts := strings.Split(parametersStr, ",")
-	for _, part := range parts {
-		// TODO - validation
-		keyAndValue := strings.SplitN(part, "_", 2)
-		key := keyAndValue[0]
-		value := keyAndValue[1]
-
-		switch key {
-		case "w", "h":
-			value, err := strconv.Atoi(value)
-			if err != nil {
-				return nil, "Could not parse value for parameter: " + key
-			}
-			if value <= 0 {
-				return nil, "Value [" + key + "] must be > 0: " + key
-			}
-		case "c":
-			value = strings.ToLower(value)
-			if len(value) > 1 {
-				return nil, "Value [" + key + "] must have only 1 character"
-			}
-			if !isValidCroppingMode(value) {
-				value = DEFAULT_CROPPING_MODE
-			}
-		}
-
-		parameters[key] = value
-	}
-	return parameters, ""
 }
