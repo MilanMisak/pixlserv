@@ -17,6 +17,9 @@ import (
 
 const (
 	LOCAL_IMAGES_PATH = "local-images"
+
+	DEFAULT_CROPPING_MODE = "e"
+	CROPPING_MODE_VALUES = "eapk"  // exact, all, part, keep scale
 )
 
 func main() {
@@ -50,7 +53,30 @@ func main() {
 			width, _  := strconv.Atoi(parameters["w"])
 			height, _ := strconv.Atoi(parameters["h"])
 
-			imgNew := resize.Resize(uint(width), uint(height), img, resize.Bilinear)
+			var imgNew image.Image
+			imgWidth  := float32(img.Bounds().Dx())
+			imgHeight := float32(img.Bounds().Dy())
+			log.Println(imgWidth, imgHeight)
+
+			// Resize and crop
+			switch parameters["c"] {
+			case "e":
+				imgNew = resize.Resize(uint(width), uint(height), img, resize.Bilinear)
+			case "a":
+				if float32(width) * (imgHeight / imgWidth) > float32(height) {
+					// Keep height
+					imgNew = resize.Resize(0, uint(height), img, resize.Bilinear)
+				} else {
+					// Keep width
+					imgNew = resize.Resize(uint(width), 0, img, resize.Bilinear)
+				}
+			case "p":
+				// TODO
+				imgNew = resize.Resize(uint(width), uint(height), img, resize.Bilinear)
+			case "k":
+				// TODO
+				imgNew = resize.Resize(uint(width), uint(height), img, resize.Bilinear)
+			}
 
 			var buffer bytes.Buffer
 			if format == "jpeg" {
@@ -76,6 +102,7 @@ func readImage(imagePath string) (image.Image, string, string) {
 	if err != nil {
 		return nil, "", "Cannot decode image"
 	}
+
 	return img, format, ""
 }
 
@@ -99,7 +126,15 @@ func parseParameters(parametersStr string) (map[string]string, string) {
 				return nil, "Could not parse value for parameter: " + key
 			}
 			if value <= 0 {
-				return nil, "Value must be > 0: " + key
+				return nil, "Value [" + key + "] must be > 0: " + key
+			}
+		case "c":
+			value = strings.ToLower(value)
+			if len(value) > 1 {
+				return nil, "Value [" + key + "] must have only 1 character"
+			}
+			if !strings.Contains(CROPPING_MODE_VALUES, value) {
+				value = DEFAULT_CROPPING_MODE
 			}
 		}
 
