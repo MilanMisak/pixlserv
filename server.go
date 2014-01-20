@@ -3,16 +3,13 @@ package main
 import (
 	"bytes"
 	"image"
-	"image/draw"
 	"image/jpeg"
 	"image/png"
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 
 	"github.com/codegangsta/martini"
-	"github.com/nfnt/resize"
 )
 
 const (
@@ -28,8 +25,8 @@ func main() {
 	m := martini.Classic()
 	m.Get("/image/:parameters/**", func(params martini.Params) (int, string) {
 		parameters, err := parseParameters(params["parameters"])
-		if err != "" {
-			return http.StatusBadRequest, err
+		if err != nil {
+			return http.StatusBadRequest, err.Error()
 		}
 		log.Println("Parameters:")
 		log.Println(parameters)
@@ -43,50 +40,8 @@ func main() {
 				return http.StatusInternalServerError, e
 			}
 
-			// TODO - magic
-
-			// The values have been validated
-			width, _ := strconv.Atoi(parameters[PARAMETER_WIDTH])
-			height, _ := strconv.Atoi(parameters[PARAMETER_HEIGHT])
-
-			var imgNew image.Image
-			// TODO - keep these as ints
-			imgWidth := float32(img.Bounds().Dx())
-			imgHeight := float32(img.Bounds().Dy())
-
-			// Resize and crop
-			switch parameters[PARAMETER_CROPPING] {
-			case CROPPING_MODE_EXACT:
-				imgNew = resize.Resize(uint(width), uint(height), img, resize.Bilinear)
-			case CROPPING_MODE_ALL:
-				if float32(width)*(imgHeight/imgWidth) > float32(height) {
-					// Keep height
-					imgNew = resize.Resize(0, uint(height), img, resize.Bilinear)
-				} else {
-					// Keep width
-					imgNew = resize.Resize(uint(width), 0, img, resize.Bilinear)
-				}
-			case CROPPING_MODE_PART:
-				// Use the top left part of the image for now
-				var croppedRect image.Rectangle
-				if float32(width)*(imgHeight/imgWidth) > float32(height) {
-					// Whole width displayed
-					newHeight := int((imgWidth / float32(width)) * float32(height))
-					croppedRect = image.Rect(0, 0, int(imgWidth), newHeight)
-				} else {
-					// Whole height displayed
-					newWidth := int((imgHeight / float32(height)) * float32(width))
-					croppedRect = image.Rect(0, 0, newWidth, int(imgHeight))
-				}
-
-				imgDraw := image.NewRGBA(croppedRect)
-				// TODO - gravity
-				draw.Draw(imgDraw, croppedRect, img, image.Point{0, 0}, draw.Src)
-				imgNew = resize.Resize(uint(width), uint(height), imgDraw, resize.Bilinear)
-			case CROPPING_MODE_KEEPSCALE:
-				// TODO
-				imgNew = resize.Resize(uint(width), uint(height), img, resize.Bilinear)
-			}
+			// TODO - more transformations
+			imgNew := transformCropAndResize(img, parameters)
 
 			var buffer bytes.Buffer
 			if format == "jpeg" {
