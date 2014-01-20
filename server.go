@@ -3,14 +3,14 @@ package main
 import (
 	"bytes"
 	"image"
-    "image/draw"
+	"image/draw"
 	"image/jpeg"
 	"image/png"
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"strconv"
+	"strings"
 
 	"github.com/codegangsta/martini"
 	"github.com/nfnt/resize"
@@ -18,15 +18,12 @@ import (
 
 const (
 	LOCAL_IMAGES_PATH = "local-images"
-
-	DEFAULT_CROPPING_MODE = "e"
-	CROPPING_MODE_VALUES = "eapk"  // exact, all, part, keep scale
 )
 
 func main() {
 	// Set up logging
 	log.SetPrefix("[pixlserv] ")
-	log.SetFlags(0)  // Removed the timestamp
+	log.SetFlags(0) // Removed the timestamp
 
 	// Run the server
 	m := martini.Classic()
@@ -50,44 +47,44 @@ func main() {
 			// TODO - magic
 
 			// The values have been validated
-			width, _  := strconv.Atoi(parameters["w"])
+			width, _ := strconv.Atoi(parameters["w"])
 			height, _ := strconv.Atoi(parameters["h"])
 
 			var imgNew image.Image
-            // TODO - keep these as ints
-			imgWidth  := float32(img.Bounds().Dx())
+			// TODO - keep these as ints
+			imgWidth := float32(img.Bounds().Dx())
 			imgHeight := float32(img.Bounds().Dy())
 
 			// Resize and crop
 			switch parameters["c"] {
-			case "e":
+			case CROPPING_MODE_EXACT:
 				imgNew = resize.Resize(uint(width), uint(height), img, resize.Bilinear)
-			case "a":
-				if float32(width) * (imgHeight / imgWidth) > float32(height) {
+			case CROPPING_MODE_ALL:
+				if float32(width)*(imgHeight/imgWidth) > float32(height) {
 					// Keep height
 					imgNew = resize.Resize(0, uint(height), img, resize.Bilinear)
 				} else {
 					// Keep width
 					imgNew = resize.Resize(uint(width), 0, img, resize.Bilinear)
 				}
-			case "p":
+			case CROPPING_MODE_PART:
 				// Use the top left part of the image for now
-                var croppedRect image.Rectangle
-				if float32(width) * (imgHeight / imgWidth) > float32(height) {
+				var croppedRect image.Rectangle
+				if float32(width)*(imgHeight/imgWidth) > float32(height) {
 					// Whole width displayed
-                    newHeight := int((imgWidth / float32(width)) * float32(height))
-                    croppedRect = image.Rect(0, 0, int(imgWidth), newHeight)
+					newHeight := int((imgWidth / float32(width)) * float32(height))
+					croppedRect = image.Rect(0, 0, int(imgWidth), newHeight)
 				} else {
 					// Whole height displayed
-                    newWidth := int((imgHeight / float32(height)) * float32(width))
-                    croppedRect = image.Rect(0, 0, newWidth, int(imgHeight))
+					newWidth := int((imgHeight / float32(height)) * float32(width))
+					croppedRect = image.Rect(0, 0, newWidth, int(imgHeight))
 				}
 
-                imgDraw := image.NewRGBA(croppedRect)
-                // TODO - gravity
-                draw.Draw(imgDraw, croppedRect, img, image.Point{0, 0}, draw.Src)
-                imgNew = resize.Resize(uint(width), uint(height), imgDraw, resize.Bilinear)
-			case "k":
+				imgDraw := image.NewRGBA(croppedRect)
+				// TODO - gravity
+				draw.Draw(imgDraw, croppedRect, img, image.Point{0, 0}, draw.Src)
+				imgNew = resize.Resize(uint(width), uint(height), imgDraw, resize.Bilinear)
+			case CROPPING_MODE_KEEPSCALE:
 				// TODO
 				imgNew = resize.Resize(uint(width), uint(height), img, resize.Bilinear)
 			}
@@ -109,7 +106,7 @@ func main() {
 // format string and an error
 func readImage(imagePath string) (image.Image, string, string) {
 	reader, err := os.Open(LOCAL_IMAGES_PATH + "/" + imagePath)
-    defer reader.Close()
+	defer reader.Close()
 
 	if err != nil {
 		return nil, "", "Cannot open image"
@@ -148,7 +145,7 @@ func parseParameters(parametersStr string) (map[string]string, string) {
 			if len(value) > 1 {
 				return nil, "Value [" + key + "] must have only 1 character"
 			}
-			if !strings.Contains(CROPPING_MODE_VALUES, value) {
+			if !isValidCroppingMode(value) {
 				value = DEFAULT_CROPPING_MODE
 			}
 		}
