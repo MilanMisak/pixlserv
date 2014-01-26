@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/codegangsta/martini"
 )
@@ -27,23 +26,37 @@ func main() {
 		}
 		log.Println("Parameters:")
 		log.Println(parameters)
-		imagePath := params["_1"]
+		baseImagePath := params["_1"]
 
-		if _, err := os.Stat(LOCAL_IMAGES_PATH + "/" + imagePath); os.IsNotExist(err) {
-			return http.StatusNotFound, "Image not found: " + imagePath
+		// Check if the image with the given parameters already exists
+		// and return it
+		fullImagePath, _ := createFilePath(baseImagePath, parameters)
+		if fileExistsInCache(fullImagePath) {
+			img, format, err := readImage(fullImagePath)
+			if err == nil {
+				var buffer bytes.Buffer
+				writeImage(img, format, &buffer)
+
+				return http.StatusOK, buffer.String()
+			}
+		}
+
+		// Load the original image and process it
+		if !imageExists(baseImagePath) {
+			return http.StatusNotFound, "Image not found: " + baseImagePath
 		} else {
-			img, format, err := readImage(imagePath)
+			img, format, err := readImage(baseImagePath)
 			if err != nil {
 				return http.StatusInternalServerError, err.Error()
 			}
 
-			// TODO - more transformations
 			imgNew := transformCropAndResize(img, parameters)
+			// TODO - add more transformations
 
 			var buffer bytes.Buffer
 			writeImage(imgNew, format, &buffer)
 
-			// TODO - cache
+			addToCache(fullImagePath, &buffer)
 
 			return http.StatusOK, buffer.String()
 		}

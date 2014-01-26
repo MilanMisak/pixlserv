@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+    "sort"
 	"strconv"
 	"strings"
 )
@@ -11,6 +12,8 @@ const (
 	PARAMETER_HEIGHT   = "h"
 	PARAMETER_CROPPING = "c"
 )
+
+// TODO - create a params struct
 
 // Turns a string like "w_400,h_300" into a map[w:400 h:300]
 // The second return value is an error message
@@ -39,11 +42,47 @@ func parseParameters(parametersStr string) (map[string]string, error) {
 				return nil, fmt.Errorf("Value %q must have only 1 character", key)
 			}
 			if !isValidCroppingMode(value) {
-				value = DEFAULT_CROPPING_MODE
+                return nil, fmt.Errorf("Invalid value for %q", key)
 			}
 		}
 
 		parameters[key] = value
 	}
+
+    _, croppingModePresent := parameters[PARAMETER_CROPPING]
+    if !croppingModePresent {
+        parameters[PARAMETER_CROPPING] = DEFAULT_CROPPING_MODE
+    }
+
 	return parameters, nil
+}
+
+// Turns an image file path and a map of parameters into a file path combining both.
+// It can then be used for file lookups.
+// The function assumes that imagePath contains an extension at the end.
+func createFilePath(imagePath string, parameters map[string]string) (string, error) {
+    i := strings.LastIndex(imagePath, ".")
+    if i == -1 {
+        return "", fmt.Errorf("Invalid image path")
+    }
+
+    orderedKeys := make([]string, len(parameters))
+    j := 0
+    for k, _ := range parameters {
+        orderedKeys[j] = k
+        j++
+    }
+    sort.Strings(orderedKeys)
+
+    paramsString := ""
+    for _, v := range orderedKeys {
+        if _, present := parameters[v]; present {
+            if paramsString != "" {
+                paramsString += ","
+            }
+            paramsString += v + "_" + parameters[v]
+        }
+    }
+
+    return imagePath[:i] + "[" + paramsString + "]" + imagePath[i:], nil
 }
