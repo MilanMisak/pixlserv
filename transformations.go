@@ -5,7 +5,7 @@ package main
 import (
 	"image"
 	"image/draw"
-    "log"
+	//"log"
 	"strconv"
 
 	"github.com/nfnt/resize"
@@ -17,18 +17,18 @@ const (
 	CROPPING_MODE_PART      = "p"
 	CROPPING_MODE_KEEPSCALE = "k"
 
-    GRAVITY_NORTH      = "n"
-    GRAVITY_NORTH_EAST = "ne"
-    GRAVITY_EAST       = "e"
-    GRAVITY_SOUTH_EAST = "se"
-    GRAVITY_SOUTH      = "s"
-    GRAVITY_SOUTH_WEST = "sw"
-    GRAVITY_WEST       = "w"
-    GRAVITY_NORTH_WEST = "nw"
-    GRAVITY_CENTER     = "c"
+	GRAVITY_NORTH      = "n"
+	GRAVITY_NORTH_EAST = "ne"
+	GRAVITY_EAST       = "e"
+	GRAVITY_SOUTH_EAST = "se"
+	GRAVITY_SOUTH      = "s"
+	GRAVITY_SOUTH_WEST = "sw"
+	GRAVITY_WEST       = "w"
+	GRAVITY_NORTH_WEST = "nw"
+	GRAVITY_CENTER     = "c"
 
 	DEFAULT_CROPPING_MODE = CROPPING_MODE_EXACT
-    DEFAULT_GRAVITY       = GRAVITY_NORTH_WEST
+	DEFAULT_GRAVITY       = GRAVITY_NORTH_WEST
 )
 
 func isValidCroppingMode(str string) bool {
@@ -36,13 +36,13 @@ func isValidCroppingMode(str string) bool {
 }
 
 func isValidGravity(str string) bool {
-    return str == GRAVITY_NORTH || str == GRAVITY_NORTH_EAST || str == GRAVITY_EAST || str == GRAVITY_SOUTH_EAST || str == GRAVITY_SOUTH || str == GRAVITY_SOUTH_WEST || str == GRAVITY_WEST || str == GRAVITY_NORTH_WEST || str == GRAVITY_CENTER
+	return str == GRAVITY_NORTH || str == GRAVITY_NORTH_EAST || str == GRAVITY_EAST || str == GRAVITY_SOUTH_EAST || str == GRAVITY_SOUTH || str == GRAVITY_SOUTH_WEST || str == GRAVITY_WEST || str == GRAVITY_NORTH_WEST || str == GRAVITY_CENTER
 }
 
 func transformCropAndResize(img image.Image, parameters map[string]string) (imgNew image.Image) {
 	width, _ := strconv.Atoi(parameters[PARAMETER_WIDTH])
 	height, _ := strconv.Atoi(parameters[PARAMETER_HEIGHT])
-    gravity := parameters[PARAMETER_GRAVITY]
+	gravity := parameters[PARAMETER_GRAVITY]
 
 	imgWidth := img.Bounds().Dx()
 	imgHeight := img.Bounds().Dy()
@@ -72,15 +72,12 @@ func transformCropAndResize(img image.Image, parameters map[string]string) (imgN
 			croppedRect = image.Rect(0, 0, newWidth, imgHeight)
 		}
 
+		topLeftPoint := calculateTopLeftPointFromGravity(gravity, croppedRect.Dx(), croppedRect.Dy(), imgWidth, imgHeight)
 		imgDraw := image.NewRGBA(croppedRect)
 
-		// TODO - gravity
-
-		draw.Draw(imgDraw, croppedRect, img, image.Point{0, 0}, draw.Src)
+		draw.Draw(imgDraw, croppedRect, img, topLeftPoint, draw.Src)
 		imgNew = resize.Resize(uint(width), uint(height), imgDraw, resize.Bilinear)
 	case CROPPING_MODE_KEEPSCALE:
-		// TODO - gravity
-
 		// If passed in dimensions are bigger use those of the image
 		if width > imgWidth {
 			width = imgWidth
@@ -90,12 +87,10 @@ func transformCropAndResize(img image.Image, parameters map[string]string) (imgN
 		}
 
 		croppedRect := image.Rect(0, 0, width, height)
-
-        log.Println(calculateTopLeftPointFromGravity(gravity, width, height, imgWidth, imgHeight))
-
+		topLeftPoint := calculateTopLeftPointFromGravity(gravity, width, height, imgWidth, imgHeight)
 		imgDraw := image.NewRGBA(croppedRect)
-		draw.Draw(imgDraw, croppedRect, img, image.Point{0, 0}, draw.Src)
 
+		draw.Draw(imgDraw, croppedRect, img, topLeftPoint, draw.Src)
 		imgNew = imgDraw.SubImage(croppedRect)
 	}
 
@@ -103,26 +98,26 @@ func transformCropAndResize(img image.Image, parameters map[string]string) (imgN
 }
 
 func calculateTopLeftPointFromGravity(gravity string, width, height int, imgWidth, imgHeight int) image.Point {
-    // Assuming width <= imgWidth && height <= imgHeight
-    switch gravity {
-    case GRAVITY_NORTH:
-        return image.Point{(imgWidth - width) / 2, 0}
-    case GRAVITY_NORTH_EAST:
-        return image.Point{imgWidth - width, 0}
-    case GRAVITY_EAST:
-        return image.Point{imgWidth - width, (imgHeight - height) / 2}
-    case GRAVITY_SOUTH_EAST:
-        return image.Point{imgWidth - width, imgHeight - height}
-    case GRAVITY_SOUTH:
-        return image.Point{(imgWidth - width) / 2, imgHeight - height}
-    case GRAVITY_SOUTH_WEST:
-        return image.Point{0, imgHeight - height}
-    case GRAVITY_WEST:
-        return image.Point{0, (imgHeight - height) / 2}
-    case GRAVITY_NORTH_WEST:
-        return image.Point{0, 0}
-    case GRAVITY_CENTER:
-        return image.Point{(imgWidth - width) / 2, (imgHeight - height) / 2}
-    }
-    panic("This point should not be reached")
+	// Assuming width <= imgWidth && height <= imgHeight
+	switch gravity {
+	case GRAVITY_NORTH:
+		return image.Point{(imgWidth - width) / 2, 0}
+	case GRAVITY_NORTH_EAST:
+		return image.Point{imgWidth - width, 0}
+	case GRAVITY_EAST:
+		return image.Point{imgWidth - width, (imgHeight - height) / 2}
+	case GRAVITY_SOUTH_EAST:
+		return image.Point{imgWidth - width, imgHeight - height}
+	case GRAVITY_SOUTH:
+		return image.Point{(imgWidth - width) / 2, imgHeight - height}
+	case GRAVITY_SOUTH_WEST:
+		return image.Point{0, imgHeight - height}
+	case GRAVITY_WEST:
+		return image.Point{0, (imgHeight - height) / 2}
+	case GRAVITY_NORTH_WEST:
+		return image.Point{0, 0}
+	case GRAVITY_CENTER:
+		return image.Point{(imgWidth - width) / 2, (imgHeight - height) / 2}
+	}
+	panic("This point should not be reached")
 }
