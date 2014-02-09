@@ -11,6 +11,7 @@ const (
 	PARAMETER_WIDTH    = "w"
 	PARAMETER_HEIGHT   = "h"
 	PARAMETER_CROPPING = "c"
+    PARAMETER_GRAVITY  = "g"
 )
 
 // TODO - create a params struct
@@ -44,6 +45,14 @@ func parseParameters(parametersStr string) (map[string]string, error) {
 			if !isValidCroppingMode(value) {
 				return nil, fmt.Errorf("Invalid value for %q", key)
 			}
+        case PARAMETER_GRAVITY:
+			value = strings.ToLower(value)
+			if len(value) > 1 {
+				return nil, fmt.Errorf("Value %q must have only 1 character", key)
+			}
+			if !isValidGravity(value) {
+				return nil, fmt.Errorf("Invalid value for %q", key)
+			}
 		}
 
 		parameters[key] = value
@@ -52,6 +61,11 @@ func parseParameters(parametersStr string) (map[string]string, error) {
 	_, croppingModePresent := parameters[PARAMETER_CROPPING]
 	if !croppingModePresent {
 		parameters[PARAMETER_CROPPING] = DEFAULT_CROPPING_MODE
+	}
+
+	_, gravityPresent := parameters[PARAMETER_GRAVITY]
+	if !gravityPresent {
+		parameters[PARAMETER_GRAVITY] = DEFAULT_GRAVITY
 	}
 
 	return parameters, nil
