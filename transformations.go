@@ -1,8 +1,11 @@
 package main
 
+// TODO - refactor out a resizing function
+
 import (
 	"image"
 	"image/draw"
+	"log"
 	"strconv"
 
 	"github.com/nfnt/resize"
@@ -54,12 +57,28 @@ func transformCropAndResize(img image.Image, parameters map[string]string) (imgN
 		}
 
 		imgDraw := image.NewRGBA(croppedRect)
+
 		// TODO - gravity
+
 		draw.Draw(imgDraw, croppedRect, img, image.Point{0, 0}, draw.Src)
 		imgNew = resize.Resize(uint(width), uint(height), imgDraw, resize.Bilinear)
 	case CROPPING_MODE_KEEPSCALE:
-		// TODO - implement
-		imgNew = resize.Resize(uint(width), uint(height), img, resize.Bilinear)
+		// TODO - gravity
+
+		// If passed in dimensions are bigger use those of the image
+		if width > imgWidth {
+			width = imgWidth
+		}
+		if height > imgHeight {
+			height = imgHeight
+		}
+
+		croppedRect := image.Rect(0, 0, width, height)
+
+		imgDraw := image.NewRGBA(croppedRect)
+		draw.Draw(imgDraw, croppedRect, img, image.Point{0, 0}, draw.Src)
+
+		imgNew = imgDraw.SubImage(croppedRect)
 	}
 
 	return

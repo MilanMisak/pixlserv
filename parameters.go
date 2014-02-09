@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-    "sort"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -42,17 +42,17 @@ func parseParameters(parametersStr string) (map[string]string, error) {
 				return nil, fmt.Errorf("Value %q must have only 1 character", key)
 			}
 			if !isValidCroppingMode(value) {
-                return nil, fmt.Errorf("Invalid value for %q", key)
+				return nil, fmt.Errorf("Invalid value for %q", key)
 			}
 		}
 
 		parameters[key] = value
 	}
 
-    _, croppingModePresent := parameters[PARAMETER_CROPPING]
-    if !croppingModePresent {
-        parameters[PARAMETER_CROPPING] = DEFAULT_CROPPING_MODE
-    }
+	_, croppingModePresent := parameters[PARAMETER_CROPPING]
+	if !croppingModePresent {
+		parameters[PARAMETER_CROPPING] = DEFAULT_CROPPING_MODE
+	}
 
 	return parameters, nil
 }
@@ -61,28 +61,28 @@ func parseParameters(parametersStr string) (map[string]string, error) {
 // It can then be used for file lookups.
 // The function assumes that imagePath contains an extension at the end.
 func createFilePath(imagePath string, parameters map[string]string) (string, error) {
-    i := strings.LastIndex(imagePath, ".")
-    if i == -1 {
-        return "", fmt.Errorf("Invalid image path")
-    }
+	i := strings.LastIndex(imagePath, ".")
+	if i == -1 {
+		return "", fmt.Errorf("Invalid image path")
+	}
 
-    orderedKeys := make([]string, len(parameters))
-    j := 0
-    for k, _ := range parameters {
-        orderedKeys[j] = k
-        j++
-    }
-    sort.Strings(orderedKeys)
+	orderedKeys := make([]string, len(parameters))
+	j := 0
+	for k, _ := range parameters {
+		orderedKeys[j] = k
+		j++
+	}
+	sort.Strings(orderedKeys)
 
-    paramsString := ""
-    for _, v := range orderedKeys {
-        if _, present := parameters[v]; present {
-            if paramsString != "" {
-                paramsString += ","
-            }
-            paramsString += v + "_" + parameters[v]
-        }
-    }
+	paramsString := ""
+	for _, v := range orderedKeys {
+		if _, present := parameters[v]; present {
+			if paramsString != "" {
+				paramsString += ","
+			}
+			paramsString += v + "_" + parameters[v]
+		}
+	}
 
-    return imagePath[:i] + "[" + paramsString + "]" + imagePath[i:], nil
+	return imagePath[:i] + "[" + paramsString + "]" + imagePath[i:], nil
 }

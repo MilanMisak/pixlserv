@@ -37,8 +37,8 @@ func writeImage(img image.Image, format string, w io.Writer) error {
 
 // Checks if an image file exists at the given path.
 func imageExists(imagePath string) bool {
-    if _, err := os.Stat(LOCAL_IMAGES_PATH + "/" + imagePath); os.IsNotExist(err) {
-        return false
-    }
-    return true
+	if _, err := os.Stat(LOCAL_IMAGES_PATH + "/" + imagePath); os.IsNotExist(err) {
+		return false
+	}
+	return true
 }

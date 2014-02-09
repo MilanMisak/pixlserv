@@ -12,5 +12,5 @@ func addToCache(filePath string, w io.Writer) {
 // Checks if the given path is in the cache.
 func fileExistsInCache(filePath string) bool {
 	// TODO - implement
-    return false
+	return false
 }
