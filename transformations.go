@@ -6,7 +6,6 @@ import (
 	"image"
 	"image/draw"
 	//"log"
-	"strconv"
 
 	"github.com/nfnt/resize"
 )
@@ -39,16 +38,16 @@ func isValidGravity(str string) bool {
 	return str == GRAVITY_NORTH || str == GRAVITY_NORTH_EAST || str == GRAVITY_EAST || str == GRAVITY_SOUTH_EAST || str == GRAVITY_SOUTH || str == GRAVITY_SOUTH_WEST || str == GRAVITY_WEST || str == GRAVITY_NORTH_WEST || str == GRAVITY_CENTER
 }
 
-func transformCropAndResize(img image.Image, parameters map[string]string) (imgNew image.Image) {
-	width, _ := strconv.Atoi(parameters[PARAMETER_WIDTH])
-	height, _ := strconv.Atoi(parameters[PARAMETER_HEIGHT])
-	gravity := parameters[PARAMETER_GRAVITY]
+func transformCropAndResize(img image.Image, parameters Params) (imgNew image.Image) {
+	width := parameters.width
+	height := parameters.height
+	gravity := parameters.gravity
 
 	imgWidth := img.Bounds().Dx()
 	imgHeight := img.Bounds().Dy()
 
 	// Resize and crop
-	switch parameters[PARAMETER_CROPPING] {
+	switch parameters.cropping {
 	case CROPPING_MODE_EXACT:
 		imgNew = resize.Resize(uint(width), uint(height), img, resize.Bilinear)
 	case CROPPING_MODE_ALL:
