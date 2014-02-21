@@ -14,12 +14,12 @@ const (
 )
 
 type Params struct {
-    width, height int
-    cropping, gravity string
+	width, height     int
+	cropping, gravity string
 }
 
 func (p Params) ToString() string {
-    return fmt.Sprintf("%s_%s,%s_%s,%s_%d,%s_%d", PARAMETER_CROPPING, p.cropping, PARAMETER_GRAVITY, p.gravity, PARAMETER_HEIGHT, p.height, PARAMETER_WIDTH, p.width)
+	return fmt.Sprintf("%s_%s,%s_%s,%s_%d,%s_%d", PARAMETER_CROPPING, p.cropping, PARAMETER_GRAVITY, p.gravity, PARAMETER_HEIGHT, p.height, PARAMETER_WIDTH, p.width)
 }
 
 // Turns a string like "w_400,h_300" into a Params struct
@@ -27,7 +27,7 @@ func (p Params) ToString() string {
 // Also validates the parameters to make sure they have valid values
 // w = width, h = height
 func parseParameters(parametersStr string) (Params, error) {
-    params := Params{0, 0, DEFAULT_CROPPING_MODE, DEFAULT_GRAVITY}
+	params := Params{0, 0, DEFAULT_CROPPING_MODE, DEFAULT_GRAVITY}
 	parts := strings.Split(parametersStr, ",")
 	for _, part := range parts {
 		keyAndValue := strings.SplitN(part, "_", 2)
@@ -43,11 +43,11 @@ func parseParameters(parametersStr string) (Params, error) {
 			if value <= 0 {
 				return params, fmt.Errorf("Value %q must be > 0: %q", key, key)
 			}
-            if key == PARAMETER_WIDTH {
-                params.width = value
-            } else {
-                params.height = value
-            }
+			if key == PARAMETER_WIDTH {
+				params.width = value
+			} else {
+				params.height = value
+			}
 		case PARAMETER_CROPPING:
 			value = strings.ToLower(value)
 			if len(value) > 1 {
@@ -56,7 +56,7 @@ func parseParameters(parametersStr string) (Params, error) {
 			if !isValidCroppingMode(value) {
 				return params, fmt.Errorf("Invalid value for %q", key)
 			}
-            params.cropping = value
+			params.cropping = value
 		case PARAMETER_GRAVITY:
 			value = strings.ToLower(value)
 			if len(value) > 2 {
@@ -65,7 +65,7 @@ func parseParameters(parametersStr string) (Params, error) {
 			if !isValidGravity(value) {
 				return params, fmt.Errorf("Invalid value for %q", key)
 			}
-            params.gravity = value
+			params.gravity = value
 		}
 	}
 
