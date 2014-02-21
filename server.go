@@ -15,7 +15,15 @@ const (
 func main() {
 	// Set up logging
 	log.SetPrefix("[pixlserv] ")
-	log.SetFlags(0) // Removed the timestamp
+	log.SetFlags(0) // Remove the timestamp
+
+	// Initialise the cache
+	err := cacheInit()
+
+	if err != nil {
+		log.Println(err)
+		return
+	}
 
 	// Run the server
 	m := martini.Classic()
