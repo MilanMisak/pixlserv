@@ -11,7 +11,7 @@ import (
 
 // Reads an image at the given path, returns an image instance,
 // format string and an error
-func readImage(imagePath string) (image.Image, string, error) {
+func loadImage(imagePath string) (image.Image, string, error) {
 	reader, err := os.Open(LOCAL_IMAGES_PATH + "/" + imagePath)
 	defer reader.Close()
 
@@ -23,6 +23,18 @@ func readImage(imagePath string) (image.Image, string, error) {
 		return nil, "", fmt.Errorf("Cannot decode image: %q", imagePath)
 	}
 	return img, format, nil
+}
+
+func saveImage(img image.Image, format string, imagePath string) error {
+	// Open file for writing, overwrite if it already exists
+	writer, err := os.Create(LOCAL_IMAGES_PATH + "/" + imagePath)
+	defer writer.Close()
+
+	if err != nil {
+		return err
+	}
+
+	return writeImage(img, format, writer)
 }
 
 // Writes a given image of the given format to the given destination.

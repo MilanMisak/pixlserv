@@ -40,7 +40,7 @@ func main() {
 		// and return it
 		fullImagePath, _ := createFilePath(baseImagePath, parameters)
 		if fileExistsInCache(fullImagePath) {
-			img, format, err := readImage(fullImagePath)
+			img, format, err := loadImage(fullImagePath)
 			if err == nil {
 				var buffer bytes.Buffer
 				writeImage(img, format, &buffer)
@@ -53,18 +53,25 @@ func main() {
 		if !imageExists(baseImagePath) {
 			return http.StatusNotFound, "Image not found: " + baseImagePath
 		} else {
-			img, format, err := readImage(baseImagePath)
+			img, format, err := loadImage(baseImagePath)
 			if err != nil {
 				return http.StatusInternalServerError, err.Error()
 			}
 
 			imgNew := transformCropAndResize(img, parameters)
-			// TODO - add more transformations
 
 			var buffer bytes.Buffer
-			writeImage(imgNew, format, &buffer)
+			err = writeImage(imgNew, format, &buffer)
+			if err != nil {
+				log.Println("Writing an image to the response failed:", err)
+			}
 
-			addToCache(fullImagePath, &buffer)
+			// TODO - these should be done asynchronously to speed up the request
+            err = saveImage(imgNew, format, fullImagePath)
+			if err != nil {
+				log.Println("Saving an image to cache failed:", err)
+			}
+			addToCache(fullImagePath)  // &buffer
 
 			return http.StatusOK, buffer.String()
 		}
