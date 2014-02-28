@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/codegangsta/martini"
 )
@@ -32,8 +35,7 @@ func main() {
 		if err != nil {
 			return http.StatusBadRequest, err.Error()
 		}
-		log.Println("Parameters:")
-		log.Println(parameters)
+		log.Println("Parameters:", parameters)
 		baseImagePath := params["_1"]
 
 		// Check if the image with the given parameters already exists
@@ -64,7 +66,7 @@ func main() {
 				log.Println("Writing an image to the response failed:", err)
 			}
 
-			// Save the image to cache asynchronously to speed up the response
+			// Cache the image asynchronously to speed up the response
 			go func() {
 				err = addToCache(fullImagePath, imgNew, format)
 				if err != nil {
@@ -75,5 +77,13 @@ func main() {
 			return http.StatusOK, buffer.String()
 		}
 	})
-	m.Run()
+	go m.Run()
+
+	// Wait for when the program is terminated
+	ch := make(chan os.Signal)
+	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
+	<-ch
+
+	// Clean up
+	cacheCleanUp()
 }
