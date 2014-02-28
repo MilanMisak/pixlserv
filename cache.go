@@ -1,14 +1,14 @@
 package main
 
 import (
+	"errors"
+	"image"
 	"log"
 	"os"
 	"strconv"
 
 	"github.com/garyburd/redigo/redis"
 )
-
-// TODO - methods here should be using IO directly
 
 const (
 	REDIS_PORT_ENV_VAR = "PIXLSERV_REDIS_PORT"
@@ -32,14 +32,21 @@ func cacheInit() error {
 }
 
 // Adds the given file to the cache.
-func addToCache(filePath string) {
+func addToCache(filePath string, img image.Image, format string) error {
 	// TODO - implement
-    log.Println("Adding to cache:", filePath)
+	log.Println("Adding to cache:", filePath)
+
+	return saveImage(img, format, filePath)
 }
 
 // Checks if the given path is in the cache.
-func fileExistsInCache(filePath string) bool {
+func loadFromCache(filePath string) (image.Image, string, error) {
 	// TODO - implement
-    log.Println("Checking for file:", filePath)
-	return false
+	log.Println("Checking for file:", filePath)
+	//return false
+
+	// TODO - update last accessed flag
+
+	//img, format, err := loadImage(fullImagePath)
+	return nil, "", errors.New("Image not found")
 }

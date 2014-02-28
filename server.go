@@ -39,14 +39,12 @@ func main() {
 		// Check if the image with the given parameters already exists
 		// and return it
 		fullImagePath, _ := createFilePath(baseImagePath, parameters)
-		if fileExistsInCache(fullImagePath) {
-			img, format, err := loadImage(fullImagePath)
-			if err == nil {
-				var buffer bytes.Buffer
-				writeImage(img, format, &buffer)
+		img, format, err := loadFromCache(fullImagePath)
+		if err == nil {
+			var buffer bytes.Buffer
+			writeImage(img, format, &buffer)
 
-				return http.StatusOK, buffer.String()
-			}
+			return http.StatusOK, buffer.String()
 		}
 
 		// Load the original image and process it
@@ -66,12 +64,13 @@ func main() {
 				log.Println("Writing an image to the response failed:", err)
 			}
 
-			// TODO - these should be done asynchronously to speed up the request
-            err = saveImage(imgNew, format, fullImagePath)
-			if err != nil {
-				log.Println("Saving an image to cache failed:", err)
-			}
-			addToCache(fullImagePath)  // &buffer
+			// Save the image to cache asynchronously to speed up the response
+			go func() {
+				err = addToCache(fullImagePath, imgNew, format)
+				if err != nil {
+					log.Println("Saving an image to cache failed:", err)
+				}
+			}()
 
 			return http.StatusOK, buffer.String()
 		}
