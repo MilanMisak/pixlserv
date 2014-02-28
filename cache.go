@@ -3,19 +3,30 @@ package main
 import (
 	"io"
 	"log"
+	"os"
+	"strconv"
 
 	"github.com/garyburd/redigo/redis"
 )
 
+const (
+	REDIS_PORT_ENV_VAR = "PIXLSERV_REDIS_PORT"
+	REDIS_DEFAULT_PORT = 6379
+)
+
 func cacheInit() error {
-	// TODO - make the port configurable?
-	c, err := redis.Dial("tcp", ":6379")
+	port, err := strconv.Atoi(os.Getenv(REDIS_PORT_ENV_VAR))
+	if err != nil {
+		port = REDIS_DEFAULT_PORT
+	}
+
+	c, err := redis.Dial("tcp", ":"+strconv.Itoa(port))
 	if err != nil {
 		return err
 	}
 	defer c.Close()
 
-	log.Println("Cache ready")
+	log.Printf("Cache ready, using port %d", port)
 	return nil
 }
 

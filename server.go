@@ -21,7 +21,7 @@ func main() {
 	err := cacheInit()
 
 	if err != nil {
-		log.Println(err)
+		log.Println("Cache initialisation failed:", err)
 		return
 	}
 
