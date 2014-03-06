@@ -2,6 +2,7 @@
 *.swo
 *.swn
 *.swm
+.DS_Store
 local-images/
 pixlserv
 Makefile
