@@ -22,11 +22,13 @@ func main() {
 
 	// Initialise the cache
 	err := cacheInit()
-
 	if err != nil {
 		log.Println("Cache initialisation failed:", err)
 		return
 	}
+
+	// Initialise storage
+	storageInit()
 
 	// Run the server
 	m := martini.Classic()
@@ -86,4 +88,5 @@ func main() {
 
 	// Clean up
 	cacheCleanUp()
+	storageCleanUp()
 }
