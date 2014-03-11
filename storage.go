@@ -75,3 +75,19 @@ func (s *LocalStorage) imageExists(imagePath string) bool {
 	}
 	return true
 }
+
+///// S3 storage
+type S3Storage struct {
+}
+
+func (s *S3Storage) loadImage(imagePath string) (image.Image, string, error) {
+	return nil, "", nil
+}
+
+func (s *S3Storage) saveImage(img image.Image, format string, imagePath string) error {
+	return nil
+}
+
+func (s *S3Storage) imageExists(imagePath string) bool {
+	return false
+}
