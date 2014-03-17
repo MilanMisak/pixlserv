@@ -10,6 +10,8 @@ import (
 
 	"github.com/codegangsta/martini"
 	//     "github.com/martini-contrib/gzip"
+	"github.com/PuerkitoBio/throttled"
+	"github.com/PuerkitoBio/throttled/store"
 )
 
 const (
@@ -34,6 +36,7 @@ func main() {
 	// Run the server
 	m := martini.Classic()
 	//     m.Use(gzip.All())
+	//m.Use(throttler())
 	m.Get("/image/:parameters/**", func(params martini.Params) (int, string) {
 		parameters, err := parseParameters(params["parameters"])
 		if err != nil {
@@ -91,4 +94,11 @@ func main() {
 	// Clean up
 	cacheCleanUp()
 	storageCleanUp()
+}
+
+func throttler() http.Handler {
+	t := throttled.RateLimit(throttled.PerMin(3), &throttled.VaryBy{RemoteAddr: true}, store.NewMemStore(1000))
+	return t.Throttle(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Dummy implementation
+	}))
 }
