@@ -1,11 +1,21 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"image"
+	"log"
 	"os"
+	"path/filepath"
 
-	//"launchpad.net/goamz/s3"
+	// 	"launchpad.net/goamz/aws"
+	// 	"launchpad.net/goamz/s3"
+	"github.com/mitchellh/goamz/aws"
+	"github.com/mitchellh/goamz/s3"
+)
+
+const (
+	S3_BUCKET_ENV_VAR = "PIXLSERV_S3_BUCKET"
 )
 
 var (
@@ -13,6 +23,8 @@ var (
 )
 
 type Storage interface {
+	init() error
+
 	loadImage(imagePath string) (image.Image, string, error)
 
 	saveImage(img image.Image, format string, imagePath string) error
@@ -21,7 +33,14 @@ type Storage interface {
 }
 
 func storageInit() {
-	storage = new(LocalStorage)
+	// TODO - return error
+	// 	storage = new(LocalStorage)
+	storage = new(S3Storage)
+	err := storage.init()
+	if err != nil {
+		log.Println("Storage could not be initialised:")
+		log.Println(err)
+	}
 }
 
 func storageCleanUp() {
@@ -41,6 +60,11 @@ func imageExists(imagePath string) bool {
 
 ///// Local storage
 type LocalStorage struct {
+}
+
+func (s *LocalStorage) init() error {
+	// TODO - initialise LOCAL_IMAGES_PATH
+	return nil
 }
 
 func (s *LocalStorage) loadImage(imagePath string) (image.Image, string, error) {
@@ -76,18 +100,68 @@ func (s *LocalStorage) imageExists(imagePath string) bool {
 	return true
 }
 
-///// S3 storage
+///// Amazon S3 storage
 type S3Storage struct {
+	bucket *s3.Bucket
 }
 
-func (s *S3Storage) loadImage(imagePath string) (image.Image, string, error) {
-	return nil, "", nil
-}
+func (s *S3Storage) init() error {
+	auth, err := aws.EnvAuth()
+	if err != nil {
+		return err
+	}
 
-func (s *S3Storage) saveImage(img image.Image, format string, imagePath string) error {
+	bucketName := os.Getenv(S3_BUCKET_ENV_VAR)
+	if bucketName == "" {
+		return fmt.Errorf("%s not set", S3_BUCKET_ENV_VAR)
+	}
+
+	conn := s3.New(auth, aws.EUWest)
+	s.bucket = conn.Bucket(bucketName)
+
 	return nil
 }
 
+func (s *S3Storage) loadImage(imagePath string) (image.Image, string, error) {
+	data, err := s.bucket.Get(imagePath)
+	if err != nil {
+		return nil, "", err
+	}
+
+	format := filepath.Ext(imagePath)
+	image, err := readImage(data, format)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return image, format, nil
+}
+
+func (s *S3Storage) saveImage(img image.Image, format string, imagePath string) error {
+	var buffer bytes.Buffer
+	err := writeImage(img, format, &buffer)
+	if err != nil {
+		return err
+	}
+
+	return s.bucket.Put(imagePath, buffer.Bytes(), "image/"+format, s3.PublicRead)
+}
+
 func (s *S3Storage) imageExists(imagePath string) bool {
+	resp, err := s.bucket.List(imagePath, "/", "", 10)
+	if err != nil {
+		log.Printf("Error while listing S3 bucket: %s\n", err.Error())
+		return false
+	}
+	if resp == nil {
+		log.Println("Error while listing S3 bucket: empty response")
+	}
+
+	for _, element := range resp.Contents {
+		if element.Key == imagePath {
+			return true
+		}
+	}
+
 	return false
 }
