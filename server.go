@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 
 	"github.com/codegangsta/martini"
@@ -16,6 +17,9 @@ import (
 
 const (
 	LOCAL_IMAGES_PATH = "local-images"
+
+	THROTTLING_RATE_ENV_VAR = "PIXLSERV_THROTTLING_RATE"
+	DEFAULT_THROTTING_RATE  = 60 // Requests per min
 )
 
 func main() {
@@ -33,10 +37,22 @@ func main() {
 	// Initialise storage
 	storageInit()
 
+	// Read config
+	throttlingRatePerMinStr := os.Getenv(THROTTLING_RATE_ENV_VAR)
+	throttlingRatePerMin := DEFAULT_THROTTING_RATE
+	if throttlingRatePerMinStr != "" {
+		throttlingRatePerMin, err = strconv.Atoi(throttlingRatePerMinStr)
+		if err != nil {
+			throttlingRatePerMin = DEFAULT_THROTTING_RATE
+		}
+	}
+
 	// Run the server
 	m := martini.Classic()
 	//     m.Use(gzip.All())
-	//m.Use(throttler())
+	if throttlingRatePerMin > 0 {
+		m.Use(throttler(throttlingRatePerMin))
+	}
 	m.Get("/image/:parameters/**", func(params martini.Params) (int, string) {
 		parameters, err := parseParameters(params["parameters"])
 		if err != nil {
@@ -96,9 +112,9 @@ func main() {
 	storageCleanUp()
 }
 
-func throttler() http.Handler {
-	t := throttled.RateLimit(throttled.PerMin(3), &throttled.VaryBy{RemoteAddr: true}, store.NewMemStore(1000))
+func throttler(perMinRate int) http.Handler {
+	t := throttled.RateLimit(throttled.PerMin(perMinRate), &throttled.VaryBy{RemoteAddr: true}, store.NewMemStore(1000))
 	return t.Throttle(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Dummy implementation
+		// Nothing needed here
 	}))
 }
