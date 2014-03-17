@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"github.com/codegangsta/martini"
+    "github.com/martini-contrib/gzip"
 )
 
 const (
@@ -32,6 +33,7 @@ func main() {
 
 	// Run the server
 	m := martini.Classic()
+    m.Use(gzip.All())
 	m.Get("/image/:parameters/**", func(params martini.Params) (int, string) {
 		parameters, err := parseParameters(params["parameters"])
 		if err != nil {
