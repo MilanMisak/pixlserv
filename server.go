@@ -9,8 +9,7 @@ import (
 	"strconv"
 	"syscall"
 
-	"github.com/codegangsta/martini"
-	//     "github.com/martini-contrib/gzip"
+	"github.com/go-martini/martini"
 	"github.com/PuerkitoBio/throttled"
 	"github.com/PuerkitoBio/throttled/store"
 )
@@ -49,7 +48,6 @@ func main() {
 
 	// Run the server
 	m := martini.Classic()
-	//     m.Use(gzip.All())
 	if throttlingRatePerMin > 0 {
 		m.Use(throttler(throttlingRatePerMin))
 	}
