@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	// 	"launchpad.net/goamz/aws"
 	// 	"launchpad.net/goamz/s3"
@@ -128,7 +129,7 @@ func (s *S3Storage) loadImage(imagePath string) (image.Image, string, error) {
 		return nil, "", err
 	}
 
-	format := filepath.Ext(imagePath)
+	format := strings.TrimLeft(filepath.Ext(imagePath), ".")
 	image, err := readImage(data, format)
 	if err != nil {
 		return nil, "", err

@@ -81,5 +81,5 @@ func createFilePath(imagePath string, parameters Params) (string, error) {
 		return "", fmt.Errorf("Invalid image path")
 	}
 
-	return imagePath[:i] + "[" + parameters.ToString() + "]" + imagePath[i:], nil
+	return imagePath[:i] + "--" + parameters.ToString() + "--" + imagePath[i:], nil
 }
