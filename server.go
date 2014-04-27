@@ -15,8 +15,6 @@ import (
 )
 
 const (
-	LOCAL_IMAGES_PATH = "local-images"
-
 	THROTTLING_RATE_ENV_VAR = "PIXLSERV_THROTTLING_RATE"
 	DEFAULT_THROTTING_RATE  = 60 // Requests per min
 )

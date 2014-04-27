@@ -16,7 +16,10 @@ import (
 )
 
 const (
-	S3_BUCKET_ENV_VAR = "PIXLSERV_S3_BUCKET"
+	LOCAL_PATH_ENV_VAR = "PIXLSERV_LOCAL_PATH"
+	S3_BUCKET_ENV_VAR  = "PIXLSERV_S3_BUCKET"
+
+	DEFAULT_LOCAL_PATH = "local-images"
 )
 
 var (
@@ -61,15 +64,20 @@ func imageExists(imagePath string) bool {
 
 ///// Local storage
 type LocalStorage struct {
+	path string
 }
 
 func (s *LocalStorage) init() error {
-	// TODO - initialise LOCAL_IMAGES_PATH
+	path := os.Getenv(LOCAL_PATH_ENV_VAR)
+	if path == "" {
+		path = DEFAULT_LOCAL_PATH
+	}
+	s.path = path
 	return nil
 }
 
 func (s *LocalStorage) loadImage(imagePath string) (image.Image, string, error) {
-	reader, err := os.Open(LOCAL_IMAGES_PATH + "/" + imagePath)
+	reader, err := os.Open(s.path + "/" + imagePath)
 	defer reader.Close()
 
 	if err != nil {
@@ -84,7 +92,7 @@ func (s *LocalStorage) loadImage(imagePath string) (image.Image, string, error) 
 
 func (s *LocalStorage) saveImage(img image.Image, format string, imagePath string) error {
 	// Open file for writing, overwrite if it already exists
-	writer, err := os.Create(LOCAL_IMAGES_PATH + "/" + imagePath)
+	writer, err := os.Create(s.path + "/" + imagePath)
 	defer writer.Close()
 
 	if err != nil {
@@ -95,7 +103,7 @@ func (s *LocalStorage) saveImage(img image.Image, format string, imagePath strin
 }
 
 func (s *LocalStorage) imageExists(imagePath string) bool {
-	if _, err := os.Stat(LOCAL_IMAGES_PATH + "/" + imagePath); os.IsNotExist(err) {
+	if _, err := os.Stat(s.path + "/" + imagePath); os.IsNotExist(err) {
 		return false
 	}
 	return true
