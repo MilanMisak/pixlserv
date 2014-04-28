@@ -16,17 +16,17 @@ import (
 )
 
 const (
-	LOCAL_PATH_ENV_VAR = "PIXLSERV_LOCAL_PATH"
-	S3_BUCKET_ENV_VAR  = "PIXLSERV_S3_BUCKET"
+	localPathEnvVar = "PIXLSERV_LOCAL_PATH"
+	s3BucketEnvVar  = "PIXLSERV_S3_BUCKET"
 
-	DEFAULT_LOCAL_PATH = "local-images"
+	defaultLocalPath = "local-images"
 )
 
 var (
-	storage Storage = nil
+	storageImpl storage
 )
 
-type Storage interface {
+type storage interface {
 	init() error
 
 	loadImage(imagePath string) (image.Image, string, error)
@@ -38,9 +38,9 @@ type Storage interface {
 
 func storageInit() {
 	// TODO - return error
-	// 	storage = new(LocalStorage)
-	storage = new(S3Storage)
-	err := storage.init()
+	// 	storage = new(localStorage)
+	storageImpl = new(s3Storage)
+	err := storageImpl.init()
 	if err != nil {
 		log.Println("Storage could not be initialised:")
 		log.Println(err)
@@ -51,46 +51,46 @@ func storageCleanUp() {
 }
 
 func loadImage(imagePath string) (image.Image, string, error) {
-	return storage.loadImage(imagePath)
+	return storageImpl.loadImage(imagePath)
 }
 
 func saveImage(img image.Image, format string, imagePath string) error {
-	return storage.saveImage(img, format, imagePath)
+	return storageImpl.saveImage(img, format, imagePath)
 }
 
 func imageExists(imagePath string) bool {
-	return storage.imageExists(imagePath)
+	return storageImpl.imageExists(imagePath)
 }
 
-///// Local storage
-type LocalStorage struct {
+// localStorage is a storage implementation using local disk
+type localStorage struct {
 	path string
 }
 
-func (s *LocalStorage) init() error {
-	path := os.Getenv(LOCAL_PATH_ENV_VAR)
+func (s *localStorage) init() error {
+	path := os.Getenv(localPathEnvVar)
 	if path == "" {
-		path = DEFAULT_LOCAL_PATH
+		path = defaultLocalPath
 	}
 	s.path = path
 	return nil
 }
 
-func (s *LocalStorage) loadImage(imagePath string) (image.Image, string, error) {
+func (s *localStorage) loadImage(imagePath string) (image.Image, string, error) {
 	reader, err := os.Open(s.path + "/" + imagePath)
 	defer reader.Close()
 
 	if err != nil {
-		return nil, "", fmt.Errorf("Image not found: %q", imagePath)
+		return nil, "", fmt.Errorf("image not found: %q", imagePath)
 	}
 	img, format, err := image.Decode(reader)
 	if err != nil {
-		return nil, "", fmt.Errorf("Cannot decode image: %q", imagePath)
+		return nil, "", fmt.Errorf("cannot decode image: %q", imagePath)
 	}
 	return img, format, nil
 }
 
-func (s *LocalStorage) saveImage(img image.Image, format string, imagePath string) error {
+func (s *localStorage) saveImage(img image.Image, format string, imagePath string) error {
 	// Open file for writing, overwrite if it already exists
 	writer, err := os.Create(s.path + "/" + imagePath)
 	defer writer.Close()
@@ -102,27 +102,27 @@ func (s *LocalStorage) saveImage(img image.Image, format string, imagePath strin
 	return writeImage(img, format, writer)
 }
 
-func (s *LocalStorage) imageExists(imagePath string) bool {
+func (s *localStorage) imageExists(imagePath string) bool {
 	if _, err := os.Stat(s.path + "/" + imagePath); os.IsNotExist(err) {
 		return false
 	}
 	return true
 }
 
-///// Amazon S3 storage
-type S3Storage struct {
+// s3Storage is a storage implementation using Amazon S3
+type s3Storage struct {
 	bucket *s3.Bucket
 }
 
-func (s *S3Storage) init() error {
+func (s *s3Storage) init() error {
 	auth, err := aws.EnvAuth()
 	if err != nil {
 		return err
 	}
 
-	bucketName := os.Getenv(S3_BUCKET_ENV_VAR)
+	bucketName := os.Getenv(s3BucketEnvVar)
 	if bucketName == "" {
-		return fmt.Errorf("%s not set", S3_BUCKET_ENV_VAR)
+		return fmt.Errorf("%s not set", s3BucketEnvVar)
 	}
 
 	conn := s3.New(auth, aws.EUWest)
@@ -131,7 +131,7 @@ func (s *S3Storage) init() error {
 	return nil
 }
 
-func (s *S3Storage) loadImage(imagePath string) (image.Image, string, error) {
+func (s *s3Storage) loadImage(imagePath string) (image.Image, string, error) {
 	data, err := s.bucket.Get(imagePath)
 	if err != nil {
 		return nil, "", err
@@ -146,7 +146,7 @@ func (s *S3Storage) loadImage(imagePath string) (image.Image, string, error) {
 	return image, format, nil
 }
 
-func (s *S3Storage) saveImage(img image.Image, format string, imagePath string) error {
+func (s *s3Storage) saveImage(img image.Image, format string, imagePath string) error {
 	var buffer bytes.Buffer
 	err := writeImage(img, format, &buffer)
 	if err != nil {
@@ -156,7 +156,7 @@ func (s *S3Storage) saveImage(img image.Image, format string, imagePath string) 
 	return s.bucket.Put(imagePath, buffer.Bytes(), "image/"+format, s3.PublicRead)
 }
 
-func (s *S3Storage) imageExists(imagePath string) bool {
+func (s *s3Storage) imageExists(imagePath string) bool {
 	resp, err := s.bucket.List(imagePath, "/", "", 10)
 	if err != nil {
 		log.Printf("Error while listing S3 bucket: %s\n", err.Error())

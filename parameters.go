@@ -7,19 +7,21 @@ import (
 )
 
 const (
-	PARAMETER_WIDTH    = "w"
-	PARAMETER_HEIGHT   = "h"
-	PARAMETER_CROPPING = "c"
-	PARAMETER_GRAVITY  = "g"
+	parameterWidth    = "w"
+	parameterHeight   = "h"
+	parameterCropping = "c"
+	parameterGravity  = "g"
 )
 
+// Params is a struct of parameters specifying an image transformation
 type Params struct {
 	width, height     int
 	cropping, gravity string
 }
 
+// ToString turns parameters into a unique string for each possible assignment of parameters
 func (p Params) ToString() string {
-	return fmt.Sprintf("%s_%s,%s_%s,%s_%d,%s_%d", PARAMETER_CROPPING, p.cropping, PARAMETER_GRAVITY, p.gravity, PARAMETER_HEIGHT, p.height, PARAMETER_WIDTH, p.width)
+	return fmt.Sprintf("%s_%s,%s_%s,%s_%d,%s_%d", parameterCropping, p.cropping, parameterGravity, p.gravity, parameterHeight, p.height, parameterWidth, p.width)
 }
 
 // Turns a string like "w_400,h_300" into a Params struct
@@ -27,7 +29,7 @@ func (p Params) ToString() string {
 // Also validates the parameters to make sure they have valid values
 // w = width, h = height
 func parseParameters(parametersStr string) (Params, error) {
-	params := Params{0, 0, DEFAULT_CROPPING_MODE, DEFAULT_GRAVITY}
+	params := Params{0, 0, DefaultCroppingMode, DefaultGravity}
 	parts := strings.Split(parametersStr, ",")
 	for _, part := range parts {
 		keyAndValue := strings.SplitN(part, "_", 2)
@@ -35,35 +37,35 @@ func parseParameters(parametersStr string) (Params, error) {
 		value := keyAndValue[1]
 
 		switch key {
-		case PARAMETER_WIDTH, PARAMETER_HEIGHT:
+		case parameterWidth, parameterHeight:
 			value, err := strconv.Atoi(value)
 			if err != nil {
-				return params, fmt.Errorf("Could not parse value for parameter: %q", key)
+				return params, fmt.Errorf("could not parse value for parameter: %q", key)
 			}
 			if value <= 0 {
-				return params, fmt.Errorf("Value %q must be > 0: %q", key, key)
+				return params, fmt.Errorf("value %q must be > 0: %q", key, key)
 			}
-			if key == PARAMETER_WIDTH {
+			if key == parameterWidth {
 				params.width = value
 			} else {
 				params.height = value
 			}
-		case PARAMETER_CROPPING:
+		case parameterCropping:
 			value = strings.ToLower(value)
 			if len(value) > 1 {
-				return params, fmt.Errorf("Value %q must have only 1 character", key)
+				return params, fmt.Errorf("value %q must have only 1 character", key)
 			}
 			if !isValidCroppingMode(value) {
-				return params, fmt.Errorf("Invalid value for %q", key)
+				return params, fmt.Errorf("invalid value for %q", key)
 			}
 			params.cropping = value
-		case PARAMETER_GRAVITY:
+		case parameterGravity:
 			value = strings.ToLower(value)
 			if len(value) > 2 {
-				return params, fmt.Errorf("Value %q must have at most 2 characters", key)
+				return params, fmt.Errorf("value %q must have at most 2 characters", key)
 			}
 			if !isValidGravity(value) {
-				return params, fmt.Errorf("Invalid value for %q", key)
+				return params, fmt.Errorf("invalid value for %q", key)
 			}
 			params.gravity = value
 		}
@@ -78,7 +80,7 @@ func parseParameters(parametersStr string) (Params, error) {
 func createFilePath(imagePath string, parameters Params) (string, error) {
 	i := strings.LastIndex(imagePath, ".")
 	if i == -1 {
-		return "", fmt.Errorf("Invalid image path")
+		return "", fmt.Errorf("invalid image path")
 	}
 
 	return imagePath[:i] + "--" + parameters.ToString() + "--" + imagePath[i:], nil

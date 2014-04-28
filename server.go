@@ -15,8 +15,8 @@ import (
 )
 
 const (
-	THROTTLING_RATE_ENV_VAR = "PIXLSERV_THROTTLING_RATE"
-	DEFAULT_THROTTING_RATE  = 60 // Requests per min
+	throttlingRateEnvVar  = "PIXLSERV_THROTTLING_RATE"
+	defaultThrottlingRate = 60 // Requests per min
 )
 
 func main() {
@@ -35,12 +35,12 @@ func main() {
 	storageInit()
 
 	// Read config
-	throttlingRatePerMinStr := os.Getenv(THROTTLING_RATE_ENV_VAR)
-	throttlingRatePerMin := DEFAULT_THROTTING_RATE
+	throttlingRatePerMinStr := os.Getenv(throttlingRateEnvVar)
+	throttlingRatePerMin := defaultThrottlingRate
 	if throttlingRatePerMinStr != "" {
 		throttlingRatePerMin, err = strconv.Atoi(throttlingRatePerMinStr)
 		if err != nil {
-			throttlingRatePerMin = DEFAULT_THROTTING_RATE
+			throttlingRatePerMin = defaultThrottlingRate
 		}
 	}
 
@@ -71,30 +71,30 @@ func main() {
 		// Load the original image and process it
 		if !imageExists(baseImagePath) {
 			return http.StatusNotFound, "Image not found: " + baseImagePath
-		} else {
-			img, format, err := loadImage(baseImagePath)
-			if err != nil {
-				return http.StatusInternalServerError, err.Error()
-			}
-
-			imgNew := transformCropAndResize(img, parameters)
-
-			var buffer bytes.Buffer
-			err = writeImage(imgNew, format, &buffer)
-			if err != nil {
-				log.Println("Writing an image to the response failed:", err)
-			}
-
-			// Cache the image asynchronously to speed up the response
-			go func() {
-				err = addToCache(fullImagePath, imgNew, format)
-				if err != nil {
-					log.Println("Saving an image to cache failed:", err)
-				}
-			}()
-
-			return http.StatusOK, buffer.String()
 		}
+
+		img, format, err = loadImage(baseImagePath)
+		if err != nil {
+			return http.StatusInternalServerError, err.Error()
+		}
+
+		imgNew := transformCropAndResize(img, parameters)
+
+		var buffer bytes.Buffer
+		err = writeImage(imgNew, format, &buffer)
+		if err != nil {
+			log.Println("Writing an image to the response failed:", err)
+		}
+
+		// Cache the image asynchronously to speed up the response
+		go func() {
+			err = addToCache(fullImagePath, imgNew, format)
+			if err != nil {
+				log.Println("Saving an image to cache failed:", err)
+			}
+		}()
+
+		return http.StatusOK, buffer.String()
 	})
 	go m.Run()
 

@@ -13,18 +13,18 @@ import (
 )
 
 const (
-	REDIS_PORT_ENV_VAR = "PIXLSERV_REDIS_PORT"
-	REDIS_DEFAULT_PORT = 6379
+	redisPortEnvVar  = "PIXLSERV_REDIS_PORT"
+	redisDefaultPort = 6379
 )
 
 var (
-	conn redis.Conn = nil
+	conn redis.Conn
 )
 
 func cacheInit() error {
-	port, err := strconv.Atoi(os.Getenv(REDIS_PORT_ENV_VAR))
+	port, err := strconv.Atoi(os.Getenv(redisPortEnvVar))
 	if err != nil {
-		port = REDIS_DEFAULT_PORT
+		port = redisDefaultPort
 	}
 
 	conn, err = redis.Dial("tcp", ":"+strconv.Itoa(port))
@@ -71,5 +71,5 @@ func loadFromCache(filePath string) (image.Image, string, error) {
 		return loadImage(filePath)
 	}
 
-	return nil, "", errors.New("Image not found")
+	return nil, "", errors.New("image not found")
 }

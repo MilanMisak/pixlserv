@@ -13,16 +13,14 @@ import (
 func writeImage(img image.Image, format string, w io.Writer) error {
 	if format == "png" {
 		return png.Encode(w, img)
-	} else {
-		return jpeg.Encode(w, img, nil)
 	}
+	return jpeg.Encode(w, img, nil)
 }
 
 func readImage(data []byte, format string) (image.Image, error) {
 	reader := bytes.NewReader(data)
 	if format == "png" {
 		return png.Decode(reader)
-	} else {
-		return jpeg.Decode(reader)
 	}
+	return jpeg.Decode(reader)
 }
