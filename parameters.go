@@ -11,17 +11,43 @@ const (
 	parameterHeight   = "h"
 	parameterCropping = "c"
 	parameterGravity  = "g"
+	parameterFilter   = "f"
+
+	// CroppingModeExact crops an image exactly to given dimensions
+	CroppingModeExact = "e"
+	// CroppingModeAll crops an image so that all of it is displayed in a frame of at most given dimensions
+	CroppingModeAll = "a"
+	// CroppingModePart crops an image so that it fills a frame of given dimensions
+	CroppingModePart = "p"
+	// CroppingModeKeepScale crops an image so that it fills a frame of given dimensions, keeps scale
+	CroppingModeKeepScale = "k"
+
+	GravityNorth     = "n"
+	GravityNorthEast = "ne"
+	GravityEast      = "e"
+	GravitySouthEast = "se"
+	GravitySouth     = "s"
+	GravitySouthWest = "sw"
+	GravityWest      = "w"
+	GravityNorthWest = "nw"
+	GravityCenter    = "c"
+
+	FilterGrayScale = "grayscale"
+
+	DefaultCroppingMode = CroppingModeExact
+	DefaultGravity      = GravityNorthWest
+	DefaultFilter       = "none"
 )
 
 // Params is a struct of parameters specifying an image transformation
 type Params struct {
-	width, height     int
-	cropping, gravity string
+	width, height             int
+	cropping, gravity, filter string
 }
 
 // ToString turns parameters into a unique string for each possible assignment of parameters
 func (p Params) ToString() string {
-	return fmt.Sprintf("%s_%s,%s_%s,%s_%d,%s_%d", parameterCropping, p.cropping, parameterGravity, p.gravity, parameterHeight, p.height, parameterWidth, p.width)
+	return fmt.Sprintf("%s_%s,%s_%s,%s_%d,%s_%d,%s_%s", parameterCropping, p.cropping, parameterGravity, p.gravity, parameterHeight, p.height, parameterWidth, p.width, parameterFilter, p.filter)
 }
 
 // Turns a string like "w_400,h_300" into a Params struct
@@ -29,7 +55,7 @@ func (p Params) ToString() string {
 // Also validates the parameters to make sure they have valid values
 // w = width, h = height
 func parseParameters(parametersStr string) (Params, error) {
-	params := Params{0, 0, DefaultCroppingMode, DefaultGravity}
+	params := Params{0, 0, DefaultCroppingMode, DefaultGravity, DefaultFilter}
 	parts := strings.Split(parametersStr, ",")
 	for _, part := range parts {
 		keyAndValue := strings.SplitN(part, "_", 2)
@@ -68,6 +94,12 @@ func parseParameters(parametersStr string) (Params, error) {
 				return params, fmt.Errorf("invalid value for %q", key)
 			}
 			params.gravity = value
+		case parameterFilter:
+			value = strings.ToLower(value)
+			if !isValidFilter(value) {
+				return params, fmt.Errorf("invalid value for %q", key)
+			}
+			params.filter = value
 		}
 	}
 
@@ -84,4 +116,16 @@ func createFilePath(imagePath string, parameters Params) (string, error) {
 	}
 
 	return imagePath[:i] + "--" + parameters.ToString() + "--" + imagePath[i:], nil
+}
+
+func isValidCroppingMode(str string) bool {
+	return str == CroppingModeExact || str == CroppingModeAll || str == CroppingModePart || str == CroppingModeKeepScale
+}
+
+func isValidGravity(str string) bool {
+	return str == GravityNorth || str == GravityNorthEast || str == GravityEast || str == GravitySouthEast || str == GravitySouth || str == GravitySouthWest || str == GravityWest || str == GravityNorthWest || str == GravityCenter
+}
+
+func isValidFilter(str string) bool {
+	return str == FilterGrayScale
 }

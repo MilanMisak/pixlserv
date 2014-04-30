@@ -4,43 +4,13 @@ package main
 
 import (
 	"image"
+	"image/color"
 	"image/draw"
+
 	//"log"
 
 	"github.com/nfnt/resize"
 )
-
-const (
-	// CroppingModeExact crops an image exactly to given dimensions
-	CroppingModeExact = "e"
-	// CroppingModeAll crops an image so that all of it is displayed in a frame of at most given dimensions
-	CroppingModeAll = "a"
-	// CroppingModePart crops an image so that it fills a frame of given dimensions
-	CroppingModePart = "p"
-	// CroppingModeKeepScale crops an image so that it fills a frame of given dimensions, keeps scale
-	CroppingModeKeepScale = "k"
-
-	GravityNorth     = "n"
-	GravityNorthEast = "ne"
-	GravityEast      = "e"
-	GravitySouthEast = "se"
-	GravitySouth     = "s"
-	GravitySouthWest = "sw"
-	GravityWest      = "w"
-	GravityNorthWest = "nw"
-	GravityCenter    = "c"
-
-	DefaultCroppingMode = CroppingModeExact
-	DefaultGravity      = GravityNorthWest
-)
-
-func isValidCroppingMode(str string) bool {
-	return str == CroppingModeExact || str == CroppingModeAll || str == CroppingModePart || str == CroppingModeKeepScale
-}
-
-func isValidGravity(str string) bool {
-	return str == GravityNorth || str == GravityNorthEast || str == GravityEast || str == GravitySouthEast || str == GravitySouth || str == GravitySouthWest || str == GravityWest || str == GravityNorthWest || str == GravityCenter
-}
 
 func transformCropAndResize(img image.Image, parameters Params) (imgNew image.Image) {
 	width := parameters.width
@@ -95,6 +65,21 @@ func transformCropAndResize(img image.Image, parameters Params) (imgNew image.Im
 
 		draw.Draw(imgDraw, croppedRect, img, topLeftPoint, draw.Src)
 		imgNew = imgDraw.SubImage(croppedRect)
+	}
+
+	// Filters
+	if parameters.filter == FilterGrayScale {
+		bounds := imgNew.Bounds()
+		w, h := bounds.Max.X, bounds.Max.Y
+		gray := image.NewGray(bounds)
+		for x := 0; x < w; x++ {
+			for y := 0; y < h; y++ {
+				oldColor := imgNew.At(x, y)
+				grayColor := color.GrayModel.Convert(oldColor)
+				gray.Set(x, y, grayColor)
+			}
+		}
+		imgNew = gray
 	}
 
 	return
