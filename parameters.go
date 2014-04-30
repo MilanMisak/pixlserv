@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -12,6 +13,7 @@ const (
 	parameterCropping = "c"
 	parameterGravity  = "g"
 	parameterFilter   = "f"
+	parameterScale    = "s"
 
 	// CroppingModeExact crops an image exactly to given dimensions
 	CroppingModeExact = "e"
@@ -34,6 +36,7 @@ const (
 
 	FilterGrayScale = "grayscale"
 
+	DefaultScale        = 1
 	DefaultCroppingMode = CroppingModeExact
 	DefaultGravity      = GravityNorthWest
 	DefaultFilter       = "none"
@@ -41,21 +44,22 @@ const (
 
 // Params is a struct of parameters specifying an image transformation
 type Params struct {
-	width, height             int
+	width, height, scale      int
 	cropping, gravity, filter string
 }
 
 // ToString turns parameters into a unique string for each possible assignment of parameters
 func (p Params) ToString() string {
-	return fmt.Sprintf("%s_%s,%s_%s,%s_%d,%s_%d,%s_%s", parameterCropping, p.cropping, parameterGravity, p.gravity, parameterHeight, p.height, parameterWidth, p.width, parameterFilter, p.filter)
+	return fmt.Sprintf("%s_%s,%s_%s,%s_%d,%s_%d,%s_%s,%s_%d", parameterCropping, p.cropping, parameterGravity, p.gravity, parameterHeight, p.height, parameterWidth, p.width, parameterFilter, p.filter, parameterScale, p.scale)
 }
 
-// Turns a string like "w_400,h_300" into a Params struct
-// The second return value is an error message
+// Turns a string like "w_400,h_300" and an image path into a Params struct
+// The second return value is a base image path after removing scaling parameter (e.g. @2x)
+// The third return value is an error message
 // Also validates the parameters to make sure they have valid values
 // w = width, h = height
-func parseParameters(parametersStr string) (Params, error) {
-	params := Params{0, 0, DefaultCroppingMode, DefaultGravity, DefaultFilter}
+func parseParameters(parametersStr, path string) (Params, string, error) {
+	params := Params{0, 0, DefaultScale, DefaultCroppingMode, DefaultGravity, DefaultFilter}
 	parts := strings.Split(parametersStr, ",")
 	for _, part := range parts {
 		keyAndValue := strings.SplitN(part, "_", 2)
@@ -66,10 +70,10 @@ func parseParameters(parametersStr string) (Params, error) {
 		case parameterWidth, parameterHeight:
 			value, err := strconv.Atoi(value)
 			if err != nil {
-				return params, fmt.Errorf("could not parse value for parameter: %q", key)
+				return params, "", fmt.Errorf("could not parse value for parameter: %q", key)
 			}
 			if value <= 0 {
-				return params, fmt.Errorf("value %q must be > 0: %q", key, key)
+				return params, "", fmt.Errorf("value %q must be > 0: %q", key, key)
 			}
 			if key == parameterWidth {
 				params.width = value
@@ -79,31 +83,39 @@ func parseParameters(parametersStr string) (Params, error) {
 		case parameterCropping:
 			value = strings.ToLower(value)
 			if len(value) > 1 {
-				return params, fmt.Errorf("value %q must have only 1 character", key)
+				return params, "", fmt.Errorf("value %q must have only 1 character", key)
 			}
 			if !isValidCroppingMode(value) {
-				return params, fmt.Errorf("invalid value for %q", key)
+				return params, "", fmt.Errorf("invalid value for %q", key)
 			}
 			params.cropping = value
 		case parameterGravity:
 			value = strings.ToLower(value)
 			if len(value) > 2 {
-				return params, fmt.Errorf("value %q must have at most 2 characters", key)
+				return params, "", fmt.Errorf("value %q must have at most 2 characters", key)
 			}
 			if !isValidGravity(value) {
-				return params, fmt.Errorf("invalid value for %q", key)
+				return params, "", fmt.Errorf("invalid value for %q", key)
 			}
 			params.gravity = value
 		case parameterFilter:
 			value = strings.ToLower(value)
 			if !isValidFilter(value) {
-				return params, fmt.Errorf("invalid value for %q", key)
+				return params, "", fmt.Errorf("invalid value for %q", key)
 			}
 			params.filter = value
 		}
 	}
 
-	return params, nil
+	// Figure out scale and base path
+	re := regexp.MustCompile("(.+)@(\\d+)x\\.([^\\.]+)$")
+	matches := re.FindStringSubmatch(path)
+	if len(matches) != 0 {
+		params.scale, _ = strconv.Atoi(matches[2])
+		path = matches[1] + "." + matches[3]
+	}
+
+	return params, path, nil
 }
 
 // Turns an image file path and a map of parameters into a file path combining both.

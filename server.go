@@ -50,12 +50,12 @@ func main() {
 		m.Use(throttler(throttlingRatePerMin))
 	}
 	m.Get("/image/:parameters/**", func(params martini.Params) (int, string) {
-		parameters, err := parseParameters(params["parameters"])
+		parameters, baseImagePath, err := parseParameters(params["parameters"], params["_1"])
 		if err != nil {
 			return http.StatusBadRequest, err.Error()
 		}
 		log.Println("Parameters:", parameters)
-		baseImagePath := params["_1"]
+		//baseImagePath := params["_1"]
 
 		// Check if the image with the given parameters already exists
 		// and return it

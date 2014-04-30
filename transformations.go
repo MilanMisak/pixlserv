@@ -16,9 +16,16 @@ func transformCropAndResize(img image.Image, parameters Params) (imgNew image.Im
 	width := parameters.width
 	height := parameters.height
 	gravity := parameters.gravity
+	scale := parameters.scale
 
 	imgWidth := img.Bounds().Dx()
 	imgHeight := img.Bounds().Dy()
+
+	// Scaling factor
+	if parameters.cropping != CroppingModeKeepScale {
+		width *= scale
+		height *= scale
+	}
 
 	// Resize and crop
 	switch parameters.cropping {
