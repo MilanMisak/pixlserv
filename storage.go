@@ -16,6 +16,8 @@ import (
 )
 
 const (
+	awsKeyEnvVar    = "AWS_ACCESS_KEY_ID"
+	awsSecretEnvVar = "AWS_SECRET_ACCESS_KEY"
 	localPathEnvVar = "PIXLSERV_LOCAL_PATH"
 	s3BucketEnvVar  = "PIXLSERV_S3_BUCKET"
 
@@ -37,9 +39,15 @@ type storage interface {
 }
 
 func storageInit() {
+	if os.Getenv(awsKeyEnvVar) != "" && os.Getenv(awsSecretEnvVar) != "" {
+		storageImpl = new(s3Storage)
+		log.Println("Using S3 storage")
+	} else {
+		storageImpl = new(localStorage)
+		log.Println("Using local storage")
+	}
+
 	// TODO - return error
-	// 	storage = new(localStorage)
-	storageImpl = new(s3Storage)
 	err := storageImpl.init()
 	if err != nil {
 		log.Println("Storage could not be initialised:")
