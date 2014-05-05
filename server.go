@@ -2,11 +2,11 @@ package main
 
 import (
 	"bytes"
+	"flag"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 
 	"github.com/PuerkitoBio/throttled"
@@ -14,18 +14,25 @@ import (
 	"github.com/go-martini/martini"
 )
 
-const (
-	throttlingRateEnvVar  = "PIXLSERV_THROTTLING_RATE"
-	defaultThrottlingRate = 60 // Requests per min
-)
-
 func main() {
+	var configFilePath string
+	flag.StringVar(&configFilePath, "config", "", "path to a configuration file")
+	flag.Parse()
+
 	// Set up logging
 	log.SetPrefix("[pixlserv] ")
 	log.SetFlags(0) // Remove the timestamp
 
+	// Initialise configuration
+	config, err := configInit(configFilePath)
+	if err != nil {
+		log.Println("Configuration reading failed:", err)
+		return
+	}
+	log.Printf("Running with config: %+v", config)
+
 	// Initialise the cache
-	err := cacheInit()
+	err = cacheInit()
 	if err != nil {
 		log.Println("Cache initialisation failed:", err)
 		return
@@ -34,20 +41,10 @@ func main() {
 	// Initialise storage
 	storageInit()
 
-	// Read config
-	throttlingRatePerMinStr := os.Getenv(throttlingRateEnvVar)
-	throttlingRatePerMin := defaultThrottlingRate
-	if throttlingRatePerMinStr != "" {
-		throttlingRatePerMin, err = strconv.Atoi(throttlingRatePerMinStr)
-		if err != nil {
-			throttlingRatePerMin = defaultThrottlingRate
-		}
-	}
-
 	// Run the server
 	m := martini.Classic()
-	if throttlingRatePerMin > 0 {
-		m.Use(throttler(throttlingRatePerMin))
+	if config.throttlingRate > 0 {
+		m.Use(throttler(config.throttlingRate))
 	}
 	m.Get("/image/:parameters/**", func(params martini.Params) (int, string) {
 		parameters, baseImagePath, err := parseParameters(params["parameters"], params["_1"])
