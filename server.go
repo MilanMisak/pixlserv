@@ -52,7 +52,7 @@ func main() {
 			return http.StatusBadRequest, err.Error()
 		}
 		log.Println("Parameters:", parameters)
-		//baseImagePath := params["_1"]
+		// TODO - enforce allow custom transformations
 
 		// Check if the image with the given parameters already exists
 		// and return it

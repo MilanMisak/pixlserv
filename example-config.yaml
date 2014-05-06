@@ -1,1 +1,5 @@
+# Number of allowed requests per IP per minute (0 = no limit)
 throttling-rate: 5
+
+# Allow custom transformations (width, height, etc) specified by URL parameters
+allow-custom-transformations: No
