@@ -10,16 +10,17 @@ import (
 const (
 	defaultThrottlingRate             = 60 // Requests per min
 	defaultAllowCustomTransformations = true
+	defaultAllowCustomScale           = true
 )
 
 type Config struct {
-	throttlingRate             int
-	allowCustomTransformations bool
-	transformations            map[string]Params
+	throttlingRate                               int
+	allowCustomTransformations, allowCustomScale bool
+	transformations                              map[string]Params
 }
 
 func configInit(configFilePath string) (Config, error) {
-	config := Config{defaultThrottlingRate, defaultAllowCustomTransformations, make(map[string]Params)}
+	config := Config{defaultThrottlingRate, defaultAllowCustomTransformations, defaultAllowCustomScale, make(map[string]Params)}
 
 	if configFilePath == "" {
 		return config, nil
@@ -41,6 +42,11 @@ func configInit(configFilePath string) (Config, error) {
 	allowCustomTransformations, ok := m["allow-custom-transformations"].(bool)
 	if ok {
 		config.allowCustomTransformations = allowCustomTransformations
+	}
+
+	allowCustomScale, ok := m["allow-custom-scale"].(bool)
+	if ok {
+		config.allowCustomScale = allowCustomScale
 	}
 
 	transformations, ok := m["transformations"].([]interface{})

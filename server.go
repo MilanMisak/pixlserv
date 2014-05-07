@@ -61,13 +61,14 @@ func main() {
 			return http.StatusBadRequest, "Custom transformations not allowed"
 		}
 		baseImagePath, scale := parseBasePathAndScale(params["_1"])
-		parameters = parameters.WithScale(scale)
+		if config.allowCustomScale {
+			parameters = parameters.WithScale(scale)
+		}
 
 		if err != nil {
 			return http.StatusBadRequest, err.Error()
 		}
 		log.Println("Parameters:", parameters)
-		// TODO - enforce allow custom scale
 
 		// Check if the image with the given parameters already exists
 		// and return it
