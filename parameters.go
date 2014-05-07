@@ -42,6 +42,11 @@ const (
 	DefaultFilter       = "none"
 )
 
+var (
+	path_re                = regexp.MustCompile("(.+)@(\\d+)x\\.([^\\.]+)$")
+	transformation_name_re = regexp.MustCompile("^t_([\\w-_]+)$")
+)
+
 // Params is a struct of parameters specifying an image transformation
 type Params struct {
 	width, height, scale      int
@@ -53,12 +58,16 @@ func (p Params) ToString() string {
 	return fmt.Sprintf("%s_%s,%s_%s,%s_%d,%s_%d,%s_%s,%s_%d", parameterCropping, p.cropping, parameterGravity, p.gravity, parameterHeight, p.height, parameterWidth, p.width, parameterFilter, p.filter, parameterScale, p.scale)
 }
 
+// Returns a copy of a Params struct with the scale set to the given value.
+func (p Params) WithScale(scale int) Params {
+	return Params{p.width, p.height, scale, p.cropping, p.gravity, p.filter}
+}
+
 // Turns a string like "w_400,h_300" and an image path into a Params struct
-// The second return value is a base image path after removing scaling parameter (e.g. @2x)
-// The third return value is an error message
+// The second return value is an error message
 // Also validates the parameters to make sure they have valid values
 // w = width, h = height
-func parseParameters(parametersStr, path string) (Params, string, error) {
+func parseParameters(parametersStr string) (Params, error) {
 	params := Params{0, 0, DefaultScale, DefaultCroppingMode, DefaultGravity, DefaultFilter}
 	parts := strings.Split(parametersStr, ",")
 	for _, part := range parts {
@@ -70,10 +79,10 @@ func parseParameters(parametersStr, path string) (Params, string, error) {
 		case parameterWidth, parameterHeight:
 			value, err := strconv.Atoi(value)
 			if err != nil {
-				return params, "", fmt.Errorf("could not parse value for parameter: %q", key)
+				return params, fmt.Errorf("could not parse value for parameter: %q", key)
 			}
 			if value <= 0 {
-				return params, "", fmt.Errorf("value %q must be > 0: %q", key, key)
+				return params, fmt.Errorf("value %q must be > 0: %q", key, key)
 			}
 			if key == parameterWidth {
 				params.width = value
@@ -83,39 +92,52 @@ func parseParameters(parametersStr, path string) (Params, string, error) {
 		case parameterCropping:
 			value = strings.ToLower(value)
 			if len(value) > 1 {
-				return params, "", fmt.Errorf("value %q must have only 1 character", key)
+				return params, fmt.Errorf("value %q must have only 1 character", key)
 			}
 			if !isValidCroppingMode(value) {
-				return params, "", fmt.Errorf("invalid value for %q", key)
+				return params, fmt.Errorf("invalid value for %q", key)
 			}
 			params.cropping = value
 		case parameterGravity:
 			value = strings.ToLower(value)
 			if len(value) > 2 {
-				return params, "", fmt.Errorf("value %q must have at most 2 characters", key)
+				return params, fmt.Errorf("value %q must have at most 2 characters", key)
 			}
 			if !isValidGravity(value) {
-				return params, "", fmt.Errorf("invalid value for %q", key)
+				return params, fmt.Errorf("invalid value for %q", key)
 			}
 			params.gravity = value
 		case parameterFilter:
 			value = strings.ToLower(value)
 			if !isValidFilter(value) {
-				return params, "", fmt.Errorf("invalid value for %q", key)
+				return params, fmt.Errorf("invalid value for %q", key)
 			}
 			params.filter = value
 		}
 	}
 
-	// Figure out scale and base path
-	re := regexp.MustCompile("(.+)@(\\d+)x\\.([^\\.]+)$")
-	matches := re.FindStringSubmatch(path)
-	if len(matches) != 0 {
-		params.scale, _ = strconv.Atoi(matches[2])
-		path = matches[1] + "." + matches[3]
-	}
+	return params, nil
+}
 
-	return params, path, nil
+// Gets (image.jpg, 2) from image@2x.jpg
+func parseBasePathAndScale(path string) (string, int) {
+	matches := path_re.FindStringSubmatch(path)
+	if len(matches) == 0 {
+		return path, 1
+	}
+	path = matches[1] + "." + matches[3]
+	scale, _ := strconv.Atoi(matches[2])
+	return path, scale
+}
+
+// Parses transformation name from a parameters string (e.g. photo from t_photo).
+// Returns "" if there is no transformation name.
+func parseTransformationName(parametersStr string) string {
+	matches := transformation_name_re.FindStringSubmatch(parametersStr)
+	if len(matches) == 0 {
+		return ""
+	}
+	return matches[1]
 }
 
 // Turns an image file path and a map of parameters into a file path combining both.

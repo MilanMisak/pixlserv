@@ -1,5 +1,15 @@
 # Number of allowed requests per IP per minute (0 = no limit)
-throttling-rate: 5
+throttling-rate: 10
 
 # Allow custom transformations (width, height, etc) specified by URL parameters
 allow-custom-transformations: No
+
+# Allow custom scale (e.g. @2x) in transformations
+allow-custom-scale: No
+
+# Named transformations
+transformations:
+    - name:       sw-corner
+      parameters: w_100,h_50,c_k,g_sw
+    - name:       square
+      parameters: w_200,h_200

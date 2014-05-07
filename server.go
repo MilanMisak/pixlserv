@@ -47,12 +47,27 @@ func main() {
 		m.Use(throttler(config.throttlingRate))
 	}
 	m.Get("/image/:parameters/**", func(params martini.Params) (int, string) {
-		parameters, baseImagePath, err := parseParameters(params["parameters"], params["_1"])
+		var parameters Params
+		transformationName := parseTransformationName(params["parameters"])
+		if transformationName != "" {
+			var ok bool
+			parameters, ok = config.transformations[transformationName]
+			if !ok {
+				return http.StatusBadRequest, "Unknown transformation: " + transformationName
+			}
+		} else if config.allowCustomTransformations {
+			parameters, err = parseParameters(params["parameters"])
+		} else {
+			return http.StatusBadRequest, "Custom transformations not allowed"
+		}
+		baseImagePath, scale := parseBasePathAndScale(params["_1"])
+		parameters = parameters.WithScale(scale)
+
 		if err != nil {
 			return http.StatusBadRequest, err.Error()
 		}
 		log.Println("Parameters:", parameters)
-		// TODO - enforce allow custom transformations
+		// TODO - enforce allow custom scale
 
 		// Check if the image with the given parameters already exists
 		// and return it

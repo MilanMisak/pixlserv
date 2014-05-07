@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 
 	"gopkg.in/yaml.v1"
@@ -14,10 +15,11 @@ const (
 type Config struct {
 	throttlingRate             int
 	allowCustomTransformations bool
+	transformations            map[string]Params
 }
 
 func configInit(configFilePath string) (Config, error) {
-	config := Config{defaultThrottlingRate, defaultAllowCustomTransformations}
+	config := Config{defaultThrottlingRate, defaultAllowCustomTransformations, make(map[string]Params)}
 
 	if configFilePath == "" {
 		return config, nil
@@ -39,6 +41,26 @@ func configInit(configFilePath string) (Config, error) {
 	allowCustomTransformations, ok := m["allow-custom-transformations"].(bool)
 	if ok {
 		config.allowCustomTransformations = allowCustomTransformations
+	}
+
+	transformations, ok := m["transformations"].([]interface{})
+	if ok {
+		for _, transformationInterface := range transformations {
+			transformation, ok := transformationInterface.(map[interface{}]interface{})
+			if ok {
+				parametersStr, ok := transformation["parameters"].(string)
+				if ok {
+					params, err := parseParameters(parametersStr)
+					if err != nil {
+						return config, fmt.Errorf("invalid transformation parameters: %s (%s)", parametersStr, err)
+					}
+					name, ok := transformation["name"].(string)
+					if ok {
+						config.transformations[name] = params
+					}
+				}
+			}
+		}
 	}
 
 	return config, nil
