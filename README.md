@@ -10,6 +10,14 @@ Images are requested from the server by accessing a URL of the following format:
 TODO
 
 
+## Configuration
+
+Pixlserv supports 2 types of underlying storage: local file system and Amazon S3. If environment variables `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `PIXLSERV_S3_BUCKET` are detected the server will try to connect to S3 given the given credentials. Otherwise, local storage will be used. The path at which images will be stored locally can be specified using the `local-path` configuration option.
+
+[//]: # (TODO: more info)
+Other configuration options include `throttling-rate`, `allow-custom-transformations`, `allow-custom-scale` and `transformations`. See [example-config.yaml](example-config.yaml) for an example.
+
+
 ## Supported transformations
 
 ### Cropping

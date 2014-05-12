@@ -39,7 +39,11 @@ func main() {
 	}
 
 	// Initialise storage
-	storageInit()
+	err = storageInit(config)
+	if err != nil {
+		log.Println("Storage initialisation failed:", err)
+		return
+	}
 
 	// Run the server
 	m := martini.Classic()

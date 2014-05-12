@@ -18,10 +18,7 @@ import (
 const (
 	awsKeyEnvVar    = "AWS_ACCESS_KEY_ID"
 	awsSecretEnvVar = "AWS_SECRET_ACCESS_KEY"
-	localPathEnvVar = "PIXLSERV_LOCAL_PATH"
 	s3BucketEnvVar  = "PIXLSERV_S3_BUCKET"
-
-	defaultLocalPath = "local-images"
 )
 
 var (
@@ -29,7 +26,7 @@ var (
 )
 
 type storage interface {
-	init() error
+	init(config Config) error
 
 	loadImage(imagePath string) (image.Image, string, error)
 
@@ -38,8 +35,8 @@ type storage interface {
 	imageExists(imagePath string) bool
 }
 
-func storageInit() {
-	if os.Getenv(awsKeyEnvVar) != "" && os.Getenv(awsSecretEnvVar) != "" {
+func storageInit(config Config) error {
+	if os.Getenv(awsKeyEnvVar) != "" && os.Getenv(awsSecretEnvVar) != "" && os.Getenv(s3BucketEnvVar) != "" {
 		storageImpl = new(s3Storage)
 		log.Println("Using S3 storage")
 	} else {
@@ -47,12 +44,7 @@ func storageInit() {
 		log.Println("Using local storage")
 	}
 
-	// TODO - return error
-	err := storageImpl.init()
-	if err != nil {
-		log.Println("Storage could not be initialised:")
-		log.Println(err)
-	}
+	return storageImpl.init(config)
 }
 
 func storageCleanUp() {
@@ -75,8 +67,8 @@ type localStorage struct {
 	path string
 }
 
-func (s *localStorage) init() error {
-	path := os.Getenv(localPathEnvVar)
+func (s *localStorage) init(config Config) error {
+	path := os.Getenv(config.localPath)
 	if path == "" {
 		path = defaultLocalPath
 	}
@@ -122,7 +114,7 @@ type s3Storage struct {
 	bucket *s3.Bucket
 }
 
-func (s *s3Storage) init() error {
+func (s *s3Storage) init(config Config) error {
 	auth, err := aws.EnvAuth()
 	if err != nil {
 		return err
