@@ -15,6 +15,10 @@ const (
 	defaultLocalPath                  = "local-images"
 )
 
+var (
+	config Config
+)
+
 type Config struct {
 	throttlingRate                                             int
 	allowCustomTransformations, allowCustomScale, asyncUploads bool
@@ -23,7 +27,7 @@ type Config struct {
 }
 
 func configInit(configFilePath string) (Config, error) {
-	config := Config{defaultThrottlingRate, defaultAllowCustomTransformations, defaultAllowCustomScale, defaultAsyncUploads, defaultLocalPath, make(map[string]Params)}
+	config = Config{defaultThrottlingRate, defaultAllowCustomTransformations, defaultAllowCustomScale, defaultAsyncUploads, defaultLocalPath, make(map[string]Params)}
 
 	if configFilePath == "" {
 		return config, nil
@@ -83,4 +87,8 @@ func configInit(configFilePath string) (Config, error) {
 	}
 
 	return config, nil
+}
+
+func getConfig() Config {
+	return config
 }
