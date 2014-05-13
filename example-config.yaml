@@ -16,3 +16,4 @@ transformations:
       parameters: w_100,h_50,c_k,g_sw
     - name:       square
       parameters: w_200,h_200
+      eager:      Yes # Run on every upload

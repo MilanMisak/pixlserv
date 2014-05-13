@@ -153,18 +153,31 @@ func uploadHandler(uf UploadForm) (int, string) {
 	defer file.Close()
 
 	// Not a big fan of .jpeg file extensions
-	fileName := fmt.Sprintf("%d.%s", time.Now().Unix(), strings.Replace(format, "jpeg", "jpg", 1))
+	baseImagePath := fmt.Sprintf("%d.%s", time.Now().Unix(), strings.Replace(format, "jpeg", "jpg", 1))
+	log.Println("Uploading %s", baseImagePath)
 
 	if config.asyncUploads {
 		go func() {
-			saveImage(img, format, fileName)
+			saveImage(img, format, baseImagePath)
 		}()
 	} else {
-		err = saveImage(img, format, fileName)
+		err = saveImage(img, format, baseImagePath)
 		if err != nil {
 			return http.StatusInternalServerError, err.Error()
 		}
 	}
+
+	// Eager transformations
+	if len(config.eagerTransformations) > 0 {
+		go func() {
+			for _, parameters := range config.eagerTransformations {
+				imgNew := transformCropAndResize(img, parameters)
+				fullImagePath, _ := createFilePath(baseImagePath, parameters)
+				addToCache(fullImagePath, imgNew, format)
+			}
+		}()
+	}
+
 	return http.StatusOK, ""
 }
 

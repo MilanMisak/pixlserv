@@ -24,10 +24,11 @@ type Config struct {
 	allowCustomTransformations, allowCustomScale, asyncUploads bool
 	localPath                                                  string
 	transformations                                            map[string]Params
+	eagerTransformations                                       []Params
 }
 
 func configInit(configFilePath string) (Config, error) {
-	config = Config{defaultThrottlingRate, defaultAllowCustomTransformations, defaultAllowCustomScale, defaultAsyncUploads, defaultLocalPath, make(map[string]Params)}
+	config = Config{defaultThrottlingRate, defaultAllowCustomTransformations, defaultAllowCustomScale, defaultAsyncUploads, defaultLocalPath, make(map[string]Params), make([]Params, 0)}
 
 	if configFilePath == "" {
 		return config, nil
@@ -80,6 +81,11 @@ func configInit(configFilePath string) (Config, error) {
 					name, ok := transformation["name"].(string)
 					if ok {
 						config.transformations[name] = params
+						eager, ok := transformation["eager"].(bool)
+
+						if ok && eager {
+							config.eagerTransformations = append(config.eagerTransformations, params)
+						}
 					}
 				}
 			}
