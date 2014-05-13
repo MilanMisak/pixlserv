@@ -7,6 +7,9 @@ allow-custom-transformations: No
 # Allow custom scale (e.g. @2x) in transformations
 allow-custom-scale: No
 
+# Upload request returns straight after image is processed by the server (saving might still fail)
+async-uploads: Yes
+
 # Named transformations
 transformations:
     - name:       sw-corner

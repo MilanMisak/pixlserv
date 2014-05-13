@@ -136,11 +136,19 @@ func main() {
 
 		defer file.Close()
 
-		go func() {
-			// Not a big fan of .jpeg file extensions
-			saveImage(img, format, fmt.Sprintf("%d.%s", time.Now().Unix(), strings.Replace(format, "jpeg", "jpg", 1)))
-		}()
+		// Not a big fan of .jpeg file extensions
+		fileName := fmt.Sprintf("%d.%s", time.Now().Unix(), strings.Replace(format, "jpeg", "jpg", 1))
 
+		if config.asyncUploads {
+			go func() {
+				saveImage(img, format, fileName)
+			}()
+		} else {
+			err = saveImage(img, format, fileName)
+			if err != nil {
+				return http.StatusInternalServerError, err.Error()
+			}
+		}
 		return http.StatusOK, ""
 	})
 	go m.Run()

@@ -11,18 +11,19 @@ const (
 	defaultThrottlingRate             = 60 // Requests per min
 	defaultAllowCustomTransformations = true
 	defaultAllowCustomScale           = true
+	defaultAsyncUploads               = false
 	defaultLocalPath                  = "local-images"
 )
 
 type Config struct {
-	throttlingRate                               int
-	allowCustomTransformations, allowCustomScale bool
-	localPath                                    string
-	transformations                              map[string]Params
+	throttlingRate                                             int
+	allowCustomTransformations, allowCustomScale, asyncUploads bool
+	localPath                                                  string
+	transformations                                            map[string]Params
 }
 
 func configInit(configFilePath string) (Config, error) {
-	config := Config{defaultThrottlingRate, defaultAllowCustomTransformations, defaultAllowCustomScale, defaultLocalPath, make(map[string]Params)}
+	config := Config{defaultThrottlingRate, defaultAllowCustomTransformations, defaultAllowCustomScale, defaultAsyncUploads, defaultLocalPath, make(map[string]Params)}
 
 	if configFilePath == "" {
 		return config, nil
@@ -49,6 +50,11 @@ func configInit(configFilePath string) (Config, error) {
 	allowCustomScale, ok := m["allow-custom-scale"].(bool)
 	if ok {
 		config.allowCustomScale = allowCustomScale
+	}
+
+	asyncUploads, ok := m["async-uploads"].(bool)
+	if ok {
+		config.asyncUploads = asyncUploads
 	}
 
 	localPath, ok := m["local-path"].(string)
