@@ -3,16 +3,26 @@ package main
 import (
 	"bytes"
 	"flag"
+	"fmt"
+	"image"
 	"log"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
+	"time"
 
 	"github.com/PuerkitoBio/throttled"
 	"github.com/PuerkitoBio/throttled/store"
 	"github.com/go-martini/martini"
+	"github.com/martini-contrib/binding"
 )
+
+type UploadForm struct {
+	PhotoUpload *multipart.FileHeader `form:"photo"`
+}
 
 func main() {
 	var configFilePath string
@@ -112,6 +122,26 @@ func main() {
 		}()
 
 		return http.StatusOK, buffer.String()
+	})
+	m.Post("/upload", binding.MultipartForm(UploadForm{}), func(uf UploadForm) (int, string) {
+		file, err := uf.PhotoUpload.Open()
+		if err != nil {
+			return http.StatusBadRequest, err.Error()
+		}
+
+		img, format, err := image.Decode(file)
+		if err != nil {
+			return http.StatusBadRequest, err.Error()
+		}
+
+		defer file.Close()
+
+		go func() {
+			// Not a big fan of .jpeg file extensions
+			saveImage(img, format, fmt.Sprintf("%d.%s", time.Now().Unix(), strings.Replace(format, "jpeg", "jpg", 1)))
+		}()
+
+		return http.StatusOK, ""
 	})
 	go m.Run()
 
