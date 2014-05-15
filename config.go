@@ -9,7 +9,7 @@ import (
 
 const (
 	LRU = "LRU"
-	LFU = "LFI"
+	LFU = "LFU"
 )
 
 const (

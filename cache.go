@@ -14,8 +14,9 @@ import (
 )
 
 const (
-	redisPortEnvVar  = "PIXLSERV_REDIS_PORT"
-	redisDefaultPort = 6379
+	redisPortEnvVar    = "PIXLSERV_REDIS_PORT"
+	redisDefaultPort   = 6379
+	candidatesToRemove = 5
 )
 
 var (
@@ -58,6 +59,8 @@ func addToCache(filePath string, img image.Image, format string) error {
 		conn.Do("SETNX", "totalcachesize", 0)
 		conn.Do("INCRBY", "totalcachesize", size)
 
+		conn.Do("ZADD", "imageaccesscounts", 0, key)
+
 		// Update queue of last accesses
 		cacheUpdateLastAccess(key)
 
@@ -68,8 +71,6 @@ func addToCache(filePath string, img image.Image, format string) error {
 }
 
 func removeFromCache(key string) {
-	log.Printf("Removing from cache: %s", key)
-
 	size, err := redis.Int(conn.Do("HGET", key, "size"))
 	if err != nil {
 		return
@@ -80,8 +81,11 @@ func removeFromCache(key string) {
 		log.Println("Error removing image:", err)
 		return
 	}
+
+	log.Printf("Removing from cache: %s", key)
 	conn.Do("DEL", key)
-	conn.Do("ZREM", "imageaccesses", key)
+	conn.Do("ZREM", "imageaccesstimestamps", key)
+	conn.Do("ZREM", "imageaccesscounts", key)
 	conn.Do("DECRBY", "totalcachesize", size)
 }
 
@@ -106,7 +110,8 @@ func loadFromCache(filePath string) (image.Image, string, error) {
 
 func cacheUpdateLastAccess(key string) {
 	timestamp := time.Now().Unix()
-	conn.Do("ZADD", "imageaccesses", timestamp, key)
+	conn.Do("ZADD", "imageaccesstimestamps", timestamp, key)
+	conn.Do("ZINCRBY", "imageaccesscounts", 1, key)
 }
 
 func pruneCache() {
@@ -121,27 +126,27 @@ func pruneCache() {
 			return
 		}
 
-		log.Printf("total size: %d", totalCacheSize)
-
 		if totalCacheSize < config.cacheLimit {
 			return
 		}
 
-		candidate := getCacheRemovalCandidate()
-		if candidate != "" {
+		candidates := getCacheRemovalCandidates()
+		for _, candidate := range candidates {
 			removeFromCache(candidate)
 		}
 	}()
 }
 
-// TODO - return multiple to speed things up
-func getCacheRemovalCandidate() string {
-	//config := getConfig()
-
-	// LRU
-	candidates, err := redis.Strings(conn.Do("ZRANGE", "imageaccesses", 0, 0))
-	if err == nil && len(candidates) > 0 {
-		return candidates[0]
+func getCacheRemovalCandidates() []string {
+	config := getConfig()
+	set := "imageaccesstimestamps" // LRU
+	if config.cacheStrategy == LFU {
+		set = "imageaccesscounts"
 	}
-	return ""
+	// Remove multiple for better performance (especially LFU)
+	candidates, err := redis.Strings(conn.Do("ZRANGE", set, 0, candidatesToRemove-1))
+	if err == nil && len(candidates) > 0 {
+		return candidates
+	}
+	return nil
 }
