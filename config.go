@@ -8,11 +8,18 @@ import (
 )
 
 const (
+	LRU = "LRU"
+	LFU = "LFI"
+)
+
+const (
 	defaultThrottlingRate             = 60 // Requests per min
+	defaultCacheLimit                 = 0  // No. of bytes
 	defaultAllowCustomTransformations = true
 	defaultAllowCustomScale           = true
 	defaultAsyncUploads               = false
 	defaultLocalPath                  = "local-images"
+	defaultCacheStrategy              = LRU
 )
 
 var (
@@ -20,15 +27,15 @@ var (
 )
 
 type Config struct {
-	throttlingRate                                             int
+	throttlingRate, cacheLimit                                 int
 	allowCustomTransformations, allowCustomScale, asyncUploads bool
-	localPath                                                  string
+	localPath, cacheStrategy                                   string
 	transformations                                            map[string]Params
 	eagerTransformations                                       []Params
 }
 
 func configInit(configFilePath string) (Config, error) {
-	config = Config{defaultThrottlingRate, defaultAllowCustomTransformations, defaultAllowCustomScale, defaultAsyncUploads, defaultLocalPath, make(map[string]Params), make([]Params, 0)}
+	config = Config{defaultThrottlingRate, defaultCacheLimit, defaultAllowCustomTransformations, defaultAllowCustomScale, defaultAsyncUploads, defaultLocalPath, defaultCacheStrategy, make(map[string]Params), make([]Params, 0)}
 
 	if configFilePath == "" {
 		return config, nil
@@ -65,6 +72,19 @@ func configInit(configFilePath string) (Config, error) {
 	localPath, ok := m["local-path"].(string)
 	if ok {
 		config.localPath = localPath
+	}
+
+	cache, ok := m["cache"].(map[interface{}]interface{})
+	if ok {
+		limit, ok := cache["limit"].(int)
+		if ok {
+			config.cacheLimit = limit
+		}
+
+		strategy, ok := cache["strategy"].(string)
+		if ok && (strategy == LRU || strategy == LFU) {
+			config.cacheStrategy = strategy
+		}
 	}
 
 	transformations, ok := m["transformations"].([]interface{})

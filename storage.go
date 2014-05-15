@@ -32,6 +32,8 @@ type storage interface {
 
 	saveImage(img image.Image, format string, imagePath string) (int, error)
 
+	deleteImage(imagePath string) error
+
 	imageExists(imagePath string) bool
 }
 
@@ -56,6 +58,10 @@ func loadImage(imagePath string) (image.Image, string, error) {
 
 func saveImage(img image.Image, format string, imagePath string) (int, error) {
 	return storageImpl.saveImage(img, format, imagePath)
+}
+
+func deleteImage(imagePath string) error {
+	return storageImpl.deleteImage(imagePath)
 }
 
 func imageExists(imagePath string) bool {
@@ -92,7 +98,8 @@ func (s *localStorage) loadImage(imagePath string) (image.Image, string, error) 
 
 func (s *localStorage) saveImage(img image.Image, format string, imagePath string) (int, error) {
 	// Open file for writing, overwrite if it already exists
-	writer, err := os.Create(s.path + "/" + imagePath)
+	fullPath := s.path + "/" + imagePath
+	writer, err := os.Create(fullPath)
 	defer writer.Close()
 
 	if err != nil {
@@ -104,7 +111,7 @@ func (s *localStorage) saveImage(img image.Image, format string, imagePath strin
 		return 0, err
 	}
 
-	f, err := os.Open(s.path + "/" + imagePath)
+	f, err := os.Open(fullPath)
 	if err != nil {
 		return 0, nil
 	}
@@ -116,6 +123,10 @@ func (s *localStorage) saveImage(img image.Image, format string, imagePath strin
 	size := stat.Size()
 
 	return int(size), err
+}
+
+func (s *localStorage) deleteImage(imagePath string) error {
+	return os.Remove(s.path + "/" + imagePath)
 }
 
 func (s *localStorage) imageExists(imagePath string) bool {
@@ -171,6 +182,10 @@ func (s *s3Storage) saveImage(img image.Image, format string, imagePath string) 
 
 	size := buffer.Len()
 	return size, s.bucket.Put(imagePath, buffer.Bytes(), "image/"+format, s3.PublicRead)
+}
+
+func (s *s3Storage) deleteImage(imagePath string) error {
+	return s.bucket.Del(imagePath)
 }
 
 func (s *s3Storage) imageExists(imagePath string) bool {
