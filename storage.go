@@ -30,7 +30,7 @@ type storage interface {
 
 	loadImage(imagePath string) (image.Image, string, error)
 
-	saveImage(img image.Image, format string, imagePath string) error
+	saveImage(img image.Image, format string, imagePath string) (int, error)
 
 	imageExists(imagePath string) bool
 }
@@ -54,7 +54,7 @@ func loadImage(imagePath string) (image.Image, string, error) {
 	return storageImpl.loadImage(imagePath)
 }
 
-func saveImage(img image.Image, format string, imagePath string) error {
+func saveImage(img image.Image, format string, imagePath string) (int, error) {
 	return storageImpl.saveImage(img, format, imagePath)
 }
 
@@ -90,16 +90,32 @@ func (s *localStorage) loadImage(imagePath string) (image.Image, string, error) 
 	return img, format, nil
 }
 
-func (s *localStorage) saveImage(img image.Image, format string, imagePath string) error {
+func (s *localStorage) saveImage(img image.Image, format string, imagePath string) (int, error) {
 	// Open file for writing, overwrite if it already exists
 	writer, err := os.Create(s.path + "/" + imagePath)
 	defer writer.Close()
 
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	return writeImage(img, format, writer)
+	err = writeImage(img, format, writer)
+	if err != nil {
+		return 0, err
+	}
+
+	f, err := os.Open(s.path + "/" + imagePath)
+	if err != nil {
+		return 0, nil
+	}
+
+	stat, err := f.Stat()
+	if err != nil {
+		return 0, nil
+	}
+	size := stat.Size()
+
+	return int(size), err
 }
 
 func (s *localStorage) imageExists(imagePath string) bool {
@@ -146,14 +162,15 @@ func (s *s3Storage) loadImage(imagePath string) (image.Image, string, error) {
 	return image, format, nil
 }
 
-func (s *s3Storage) saveImage(img image.Image, format string, imagePath string) error {
+func (s *s3Storage) saveImage(img image.Image, format string, imagePath string) (int, error) {
 	var buffer bytes.Buffer
 	err := writeImage(img, format, &buffer)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	return s.bucket.Put(imagePath, buffer.Bytes(), "image/"+format, s3.PublicRead)
+	size := buffer.Len()
+	return size, s.bucket.Put(imagePath, buffer.Bytes(), "image/"+format, s3.PublicRead)
 }
 
 func (s *s3Storage) imageExists(imagePath string) bool {

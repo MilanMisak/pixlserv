@@ -161,7 +161,7 @@ func uploadHandler(uf UploadForm) (int, string) {
 			saveImage(img, format, baseImagePath)
 		}()
 	} else {
-		err = saveImage(img, format, baseImagePath)
+		_, err := saveImage(img, format, baseImagePath)
 		if err != nil {
 			return http.StatusInternalServerError, err.Error()
 		}

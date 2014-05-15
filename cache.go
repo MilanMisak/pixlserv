@@ -47,11 +47,12 @@ func addToCache(filePath string, img image.Image, format string) error {
 	log.Println("Adding to cache:", filePath)
 
 	// Save the image
-	err := saveImage(img, format, filePath)
+	size, err := saveImage(img, format, filePath)
 	if err == nil {
+		log.Printf("Adding a file of size: %d", size)
 		// Add a record to the cache
-		timestamp, _ := time.Now().MarshalText()
-		conn.Do("SET", fmt.Sprintf("image:%s", filePath), timestamp)
+		timestamp := time.Now().Unix()
+		conn.Do("HMSET", fmt.Sprintf("image:%s", filePath), "lastaccess", timestamp, "size", size)
 	}
 
 	return err
@@ -67,7 +68,10 @@ func loadFromCache(filePath string) (image.Image, string, error) {
 	}
 
 	if exists {
-		// TODO - update last accessed flag
+		// Update last accessed flag
+		timestamp := time.Now().Unix()
+		conn.Do("HSET", fmt.Sprintf("image:%s", filePath), "lastaccess", timestamp)
+
 		return loadImage(filePath)
 	}
 
