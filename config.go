@@ -13,8 +13,9 @@ const (
 )
 
 const (
-	defaultThrottlingRate             = 60 // Requests per min
-	defaultCacheLimit                 = 0  // No. of bytes
+	defaultThrottlingRate             = 60              // Requests per min
+	defaultCacheLimit                 = 0               // No. of bytes
+	defaultUploadMaxFileSize          = 5 * 1024 * 1024 // No. of bytes
 	defaultAllowCustomTransformations = true
 	defaultAllowCustomScale           = true
 	defaultAsyncUploads               = false
@@ -27,7 +28,7 @@ var (
 )
 
 type Config struct {
-	throttlingRate, cacheLimit                                 int
+	throttlingRate, cacheLimit, uploadMaxFileSize              int
 	allowCustomTransformations, allowCustomScale, asyncUploads bool
 	localPath, cacheStrategy                                   string
 	transformations                                            map[string]Params
@@ -35,7 +36,7 @@ type Config struct {
 }
 
 func configInit(configFilePath string) (Config, error) {
-	config = Config{defaultThrottlingRate, defaultCacheLimit, defaultAllowCustomTransformations, defaultAllowCustomScale, defaultAsyncUploads, defaultLocalPath, defaultCacheStrategy, make(map[string]Params), make([]Params, 0)}
+	config = Config{defaultThrottlingRate, defaultCacheLimit, defaultUploadMaxFileSize, defaultAllowCustomTransformations, defaultAllowCustomScale, defaultAsyncUploads, defaultLocalPath, defaultCacheStrategy, make(map[string]Params), make([]Params, 0)}
 
 	if configFilePath == "" {
 		return config, nil
@@ -52,6 +53,11 @@ func configInit(configFilePath string) (Config, error) {
 	throttlingRate, ok := m["throttling-rate"].(int)
 	if ok && throttlingRate >= 0 {
 		config.throttlingRate = throttlingRate
+	}
+
+	uploadMaxFileSize, ok := m["upload-max-file-size"].(int)
+	if ok && uploadMaxFileSize > 0 {
+		config.uploadMaxFileSize = uploadMaxFileSize
 	}
 
 	allowCustomTransformations, ok := m["allow-custom-transformations"].(bool)

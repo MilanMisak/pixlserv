@@ -5,6 +5,8 @@ import (
 	"flag"
 	"fmt"
 	"image"
+	"io"
+	"io/ioutil"
 	"log"
 	"mime/multipart"
 	"net/http"
@@ -145,7 +147,18 @@ func uploadHandler(uf UploadForm) (int, string) {
 		return http.StatusBadRequest, err.Error()
 	}
 
-	img, format, err := image.Decode(file)
+	config := getConfig()
+
+	limit := io.LimitReader(file, int64(config.uploadMaxFileSize+1))
+	data, err := ioutil.ReadAll(limit)
+	if err != nil {
+		return http.StatusBadRequest, err.Error()
+	}
+	if len(data) > config.uploadMaxFileSize {
+		return http.StatusBadRequest, "max file size exceeded"
+	}
+
+	img, format, err := image.Decode(bytes.NewReader(data))
 	if err != nil {
 		return http.StatusBadRequest, err.Error()
 	}
@@ -154,7 +167,7 @@ func uploadHandler(uf UploadForm) (int, string) {
 
 	// Not a big fan of .jpeg file extensions
 	baseImagePath := fmt.Sprintf("%d.%s", time.Now().Unix(), strings.Replace(format, "jpeg", "jpg", 1))
-	log.Println("Uploading %s", baseImagePath)
+	log.Printf("Uploading %s", baseImagePath)
 
 	if config.asyncUploads {
 		go func() {
