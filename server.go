@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"flag"
 	"fmt"
 	"image"
 	"io"
@@ -18,6 +17,7 @@ import (
 
 	"github.com/PuerkitoBio/throttled"
 	"github.com/PuerkitoBio/throttled/store"
+	"github.com/codegangsta/cli"
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/binding"
 )
@@ -27,53 +27,70 @@ type UploadForm struct {
 }
 
 func main() {
-	var configFilePath string
-	flag.StringVar(&configFilePath, "config", "", "path to a configuration file")
-	flag.Parse()
+	app := cli.NewApp()
+	app.Name = "pixlserv"
+	app.Usage = "transform and serve images"
+	app.Version = "1.0"
+	app.Commands = []cli.Command{
+		{
+			Name:      "run",
+			ShortName: "r",
+			Usage:     "runs the server, run [config-file]",
+			Action: func(c *cli.Context) {
+				// Set up logging
+				log.SetPrefix("[pixlserv] ")
+				log.SetFlags(0) // Remove the timestamp
 
-	// Set up logging
-	log.SetPrefix("[pixlserv] ")
-	log.SetFlags(0) // Remove the timestamp
+				if len(c.Args()) < 1 {
+					log.Println("Provide a path to a config file")
+					return
+				}
+				configFilePath := c.Args().First()
 
-	// Initialise configuration
-	config, err := configInit(configFilePath)
-	if err != nil {
-		log.Println("Configuration reading failed:", err)
-		return
+				// Initialise configuration
+				config, err := configInit(configFilePath)
+				if err != nil {
+					log.Println("Configuration reading failed:", err)
+					return
+				}
+				log.Printf("Running with config: %+v", config)
+
+				// Initialise the cache
+				err = cacheInit()
+				if err != nil {
+					log.Println("Cache initialisation failed:", err)
+					return
+				}
+
+				// Initialise storage
+				err = storageInit(config)
+				if err != nil {
+					log.Println("Storage initialisation failed:", err)
+					return
+				}
+
+				// Run the server
+				m := martini.Classic()
+				if config.throttlingRate > 0 {
+					m.Use(throttler(config.throttlingRate))
+				}
+				m.Get("/image/:parameters/**", transformationHandler)
+				m.Post("/upload", binding.MultipartForm(UploadForm{}), uploadHandler)
+				go m.Run()
+
+				// Wait for when the program is terminated
+				ch := make(chan os.Signal)
+				signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
+				<-ch
+
+				// Clean up
+				cacheCleanUp()
+				storageCleanUp()
+			},
+		},
 	}
-	log.Printf("Running with config: %+v", config)
 
-	// Initialise the cache
-	err = cacheInit()
-	if err != nil {
-		log.Println("Cache initialisation failed:", err)
-		return
-	}
-
-	// Initialise storage
-	err = storageInit(config)
-	if err != nil {
-		log.Println("Storage initialisation failed:", err)
-		return
-	}
-
-	// Run the server
-	m := martini.Classic()
-	if config.throttlingRate > 0 {
-		m.Use(throttler(config.throttlingRate))
-	}
-	m.Get("/image/:parameters/**", transformationHandler)
-	m.Post("/upload", binding.MultipartForm(UploadForm{}), uploadHandler)
-	go m.Run()
-
-	// Wait for when the program is terminated
-	ch := make(chan os.Signal)
-	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
-	<-ch
-
-	// Clean up
-	cacheCleanUp()
-	storageCleanUp()
+	app.Run(os.Args)
 }
 
 func transformationHandler(params martini.Params) (int, string) {
