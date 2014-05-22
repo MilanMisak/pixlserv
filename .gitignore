@@ -3,6 +3,9 @@
 *.swn
 *.swm
 .DS_Store
+.ctrlp-similar/
+config/
 local-images/
+uuid/
 pixlserv
 Makefile
