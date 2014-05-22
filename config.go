@@ -26,10 +26,10 @@ const (
 )
 
 var (
-	config Config
+	Config Configuration
 )
 
-type Config struct {
+type Configuration struct {
 	throttlingRate, cacheLimit, uploadMaxFileSize                                               int
 	allowCustomTransformations, allowCustomScale, asyncUploads, authorisedGet, authorisedUpload bool
 	localPath, cacheStrategy                                                                    string
@@ -37,16 +37,16 @@ type Config struct {
 	eagerTransformations                                                                        []Params
 }
 
-func configInit(configFilePath string) (Config, error) {
-	config = Config{defaultThrottlingRate, defaultCacheLimit, defaultUploadMaxFileSize, defaultAllowCustomTransformations, defaultAllowCustomScale, defaultAsyncUploads, defaultAuthorisedGet, defaultAuthorisedUpload, defaultLocalPath, defaultCacheStrategy, make(map[string]Params), make([]Params, 0)}
+func configInit(configFilePath string) error {
+	Config = Configuration{defaultThrottlingRate, defaultCacheLimit, defaultUploadMaxFileSize, defaultAllowCustomTransformations, defaultAllowCustomScale, defaultAsyncUploads, defaultAuthorisedGet, defaultAuthorisedUpload, defaultLocalPath, defaultCacheStrategy, make(map[string]Params), make([]Params, 0)}
 
 	if configFilePath == "" {
-		return config, nil
+		return nil
 	}
 
 	data, err := ioutil.ReadFile(configFilePath)
 	if err != nil {
-		return config, err
+		return err
 	}
 
 	m := make(map[interface{}]interface{})
@@ -54,56 +54,56 @@ func configInit(configFilePath string) (Config, error) {
 
 	throttlingRate, ok := m["throttling-rate"].(int)
 	if ok && throttlingRate >= 0 {
-		config.throttlingRate = throttlingRate
+		Config.throttlingRate = throttlingRate
 	}
 
 	uploadMaxFileSize, ok := m["upload-max-file-size"].(int)
 	if ok && uploadMaxFileSize > 0 {
-		config.uploadMaxFileSize = uploadMaxFileSize
+		Config.uploadMaxFileSize = uploadMaxFileSize
 	}
 
 	allowCustomTransformations, ok := m["allow-custom-transformations"].(bool)
 	if ok {
-		config.allowCustomTransformations = allowCustomTransformations
+		Config.allowCustomTransformations = allowCustomTransformations
 	}
 
 	allowCustomScale, ok := m["allow-custom-scale"].(bool)
 	if ok {
-		config.allowCustomScale = allowCustomScale
+		Config.allowCustomScale = allowCustomScale
 	}
 
 	asyncUploads, ok := m["async-uploads"].(bool)
 	if ok {
-		config.asyncUploads = asyncUploads
+		Config.asyncUploads = asyncUploads
 	}
 
 	authorisation, ok := m["authorisation"].(map[interface{}]interface{})
 	if ok {
 		get, ok := authorisation["get"].(bool)
 		if ok {
-			config.authorisedGet = get
+			Config.authorisedGet = get
 		}
 		upload, ok := authorisation["upload"].(bool)
 		if ok {
-			config.authorisedUpload = upload
+			Config.authorisedUpload = upload
 		}
 	}
 
 	localPath, ok := m["local-path"].(string)
 	if ok {
-		config.localPath = localPath
+		Config.localPath = localPath
 	}
 
 	cache, ok := m["cache"].(map[interface{}]interface{})
 	if ok {
 		limit, ok := cache["limit"].(int)
 		if ok {
-			config.cacheLimit = limit
+			Config.cacheLimit = limit
 		}
 
 		strategy, ok := cache["strategy"].(string)
 		if ok && (strategy == LRU || strategy == LFU) {
-			config.cacheStrategy = strategy
+			Config.cacheStrategy = strategy
 		}
 	}
 
@@ -116,15 +116,15 @@ func configInit(configFilePath string) (Config, error) {
 				if ok {
 					params, err := parseParameters(parametersStr)
 					if err != nil {
-						return config, fmt.Errorf("invalid transformation parameters: %s (%s)", parametersStr, err)
+						return fmt.Errorf("invalid transformation parameters: %s (%s)", parametersStr, err)
 					}
 					name, ok := transformation["name"].(string)
 					if ok {
-						config.transformations[name] = params
+						Config.transformations[name] = params
 						eager, ok := transformation["eager"].(bool)
 
 						if ok && eager {
-							config.eagerTransformations = append(config.eagerTransformations, params)
+							Config.eagerTransformations = append(Config.eagerTransformations, params)
 						}
 					}
 				}
@@ -132,9 +132,5 @@ func configInit(configFilePath string) (Config, error) {
 		}
 	}
 
-	return config, nil
-}
-
-func getConfig() Config {
-	return config
+	return nil
 }

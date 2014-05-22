@@ -26,7 +26,7 @@ var (
 )
 
 type storage interface {
-	init(config Config) error
+	init() error
 
 	loadImage(imagePath string) (image.Image, string, error)
 
@@ -37,7 +37,7 @@ type storage interface {
 	imageExists(imagePath string) bool
 }
 
-func storageInit(config Config) error {
+func storageInit() error {
 	if os.Getenv(awsKeyEnvVar) != "" && os.Getenv(awsSecretEnvVar) != "" && os.Getenv(s3BucketEnvVar) != "" {
 		storageImpl = new(s3Storage)
 		log.Println("Using S3 storage")
@@ -46,7 +46,7 @@ func storageInit(config Config) error {
 		log.Println("Using local storage")
 	}
 
-	return storageImpl.init(config)
+	return storageImpl.init()
 }
 
 func storageCleanUp() {
@@ -73,8 +73,8 @@ type localStorage struct {
 	path string
 }
 
-func (s *localStorage) init(config Config) error {
-	path := os.Getenv(config.localPath)
+func (s *localStorage) init() error {
+	path := os.Getenv(Config.localPath)
 	if path == "" {
 		path = defaultLocalPath
 	}
@@ -141,7 +141,7 @@ type s3Storage struct {
 	bucket *s3.Bucket
 }
 
-func (s *s3Storage) init(config Config) error {
+func (s *s3Storage) init() error {
 	auth, err := aws.EnvAuth()
 	if err != nil {
 		return err

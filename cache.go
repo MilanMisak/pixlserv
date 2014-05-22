@@ -92,8 +92,7 @@ func cacheUpdateLastAccess(key string) {
 
 func pruneCache() {
 	go func() {
-		config := getConfig()
-		if config.cacheLimit == 0 {
+		if Config.cacheLimit == 0 {
 			return
 		}
 
@@ -102,7 +101,7 @@ func pruneCache() {
 			return
 		}
 
-		if totalCacheSize < config.cacheLimit {
+		if totalCacheSize < Config.cacheLimit {
 			return
 		}
 
@@ -114,9 +113,8 @@ func pruneCache() {
 }
 
 func getCacheRemovalCandidates() []string {
-	config := getConfig()
 	set := "imageaccesstimestamps" // LRU
-	if config.cacheStrategy == LFU {
+	if Config.cacheStrategy == LFU {
 		set = "imageaccesscounts"
 	}
 	// Remove multiple for better performance (especially LFU)

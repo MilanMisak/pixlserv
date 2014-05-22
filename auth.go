@@ -32,10 +32,9 @@ func authInit() error {
 	permissionsByKey = make(map[string]map[string]bool)
 
 	// Set up permissions for when there's no API key
-	config := getConfig()
 	permissionsByKey[""] = make(map[string]bool)
-	permissionsByKey[""][GetPermission] = !config.authorisedGet
-	permissionsByKey[""][UploadPermission] = !config.authorisedUpload
+	permissionsByKey[""][GetPermission] = !Config.authorisedGet
+	permissionsByKey[""][UploadPermission] = !Config.authorisedUpload
 
 	// Set up permissions for API keys
 	for _, key := range keys {

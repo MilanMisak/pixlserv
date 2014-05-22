@@ -56,12 +56,12 @@ func main() {
 				configFilePath := c.Args().First()
 
 				// Initialise configuration
-				config, err := configInit(configFilePath)
+				err := configInit(configFilePath)
 				if err != nil {
 					log.Println("Configuration reading failed:", err)
 					return
 				}
-				log.Printf("Running with config: %+v", config)
+				log.Printf("Running with config: %+v", Config)
 
 				// Initialise authentication
 				err = authInit()
@@ -71,7 +71,7 @@ func main() {
 				}
 
 				// Initialise storage
-				err = storageInit(config)
+				err = storageInit()
 				if err != nil {
 					log.Println("Storage initialisation failed:", err)
 					return
@@ -79,8 +79,8 @@ func main() {
 
 				// Run the server
 				m := martini.Classic()
-				if config.throttlingRate > 0 {
-					m.Use(throttler(config.throttlingRate))
+				if Config.throttlingRate > 0 {
+					m.Use(throttler(Config.throttlingRate))
 				}
 				m.Get("/((?P<apikey>[A-Z0-9]+)/)?image/:parameters/**", transformationHandler)
 				m.Post("/((?P<apikey>[A-Z0-9]+)/)?upload", binding.MultipartForm(UploadForm{}), uploadHandler)
@@ -194,17 +194,17 @@ func transformationHandler(params martini.Params) (int, string) {
 	transformationName := parseTransformationName(params["parameters"])
 	if transformationName != "" {
 		var ok bool
-		parameters, ok = config.transformations[transformationName]
+		parameters, ok = Config.transformations[transformationName]
 		if !ok {
 			return http.StatusBadRequest, "Unknown transformation: " + transformationName
 		}
-	} else if config.allowCustomTransformations {
+	} else if Config.allowCustomTransformations {
 		parameters, err = parseParameters(params["parameters"])
 	} else {
 		return http.StatusBadRequest, "Custom transformations not allowed"
 	}
 	baseImagePath, scale := parseBasePathAndScale(params["_1"])
-	if config.allowCustomScale {
+	if Config.allowCustomScale {
 		parameters = parameters.WithScale(scale)
 	}
 
@@ -263,14 +263,12 @@ func uploadHandler(params martini.Params, uf UploadForm) (int, string) {
 		return http.StatusBadRequest, err.Error()
 	}
 
-	config := getConfig()
-
-	limit := io.LimitReader(file, int64(config.uploadMaxFileSize+1))
+	limit := io.LimitReader(file, int64(Config.uploadMaxFileSize+1))
 	data, err := ioutil.ReadAll(limit)
 	if err != nil {
 		return http.StatusBadRequest, err.Error()
 	}
-	if len(data) > config.uploadMaxFileSize {
+	if len(data) > Config.uploadMaxFileSize {
 		return http.StatusBadRequest, "max file size exceeded"
 	}
 
@@ -285,7 +283,7 @@ func uploadHandler(params martini.Params, uf UploadForm) (int, string) {
 	baseImagePath := fmt.Sprintf("%d.%s", time.Now().Unix(), strings.Replace(format, "jpeg", "jpg", 1))
 	log.Printf("Uploading %s", baseImagePath)
 
-	if config.asyncUploads {
+	if Config.asyncUploads {
 		go func() {
 			saveImage(img, format, baseImagePath)
 		}()
@@ -297,9 +295,9 @@ func uploadHandler(params martini.Params, uf UploadForm) (int, string) {
 	}
 
 	// Eager transformations
-	if len(config.eagerTransformations) > 0 {
+	if len(Config.eagerTransformations) > 0 {
 		go func() {
-			for _, parameters := range config.eagerTransformations {
+			for _, parameters := range Config.eagerTransformations {
 				imgNew := transformCropAndResize(img, parameters)
 				fullImagePath, _ := createFilePath(baseImagePath, parameters)
 				addToCache(fullImagePath, imgNew, format)
