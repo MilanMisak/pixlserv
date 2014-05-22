@@ -92,7 +92,7 @@ func main() {
 				<-ch
 
 				// Clean up
-				cacheCleanUp()
+				redisCleanUp()
 				storageCleanUp()
 			},
 		},

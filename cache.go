@@ -15,11 +15,6 @@ const (
 	candidatesToRemove = 5
 )
 
-func cacheCleanUp() {
-	log.Println("Closing redis connection for the cache")
-	conn.Close()
-}
-
 // Adds the given file to the cache.
 func addToCache(filePath string, img image.Image, format string) error {
 	log.Println("Adding to cache:", filePath)
@@ -30,12 +25,12 @@ func addToCache(filePath string, img image.Image, format string) error {
 		key := fmt.Sprintf("image:%s", filePath)
 
 		// Add a record to the cache
-		conn.Do("HSET", key, "size", size)
+		Conn.Do("HSET", key, "size", size)
 
-		conn.Do("SETNX", "totalcachesize", 0)
-		conn.Do("INCRBY", "totalcachesize", size)
+		Conn.Do("SETNX", "totalcachesize", 0)
+		Conn.Do("INCRBY", "totalcachesize", size)
 
-		conn.Do("ZADD", "imageaccesscounts", 0, key)
+		Conn.Do("ZADD", "imageaccesscounts", 0, key)
 
 		// Update queue of last accesses
 		cacheUpdateLastAccess(key)
@@ -47,7 +42,7 @@ func addToCache(filePath string, img image.Image, format string) error {
 }
 
 func removeFromCache(key string) {
-	size, err := redis.Int(conn.Do("HGET", key, "size"))
+	size, err := redis.Int(Conn.Do("HGET", key, "size"))
 	if err != nil {
 		return
 	}
@@ -59,17 +54,17 @@ func removeFromCache(key string) {
 	}
 
 	log.Printf("Removing from cache: %s", key)
-	conn.Do("DEL", key)
-	conn.Do("ZREM", "imageaccesstimestamps", key)
-	conn.Do("ZREM", "imageaccesscounts", key)
-	conn.Do("DECRBY", "totalcachesize", size)
+	Conn.Do("DEL", key)
+	Conn.Do("ZREM", "imageaccesstimestamps", key)
+	Conn.Do("ZREM", "imageaccesscounts", key)
+	Conn.Do("DECRBY", "totalcachesize", size)
 }
 
 // Loads a file specified by its path from the cache.
 func loadFromCache(filePath string) (image.Image, string, error) {
 	log.Println("Cache lookup for:", filePath)
 
-	exists, err := redis.Bool(conn.Do("EXISTS", fmt.Sprintf("image:%s", filePath)))
+	exists, err := redis.Bool(Conn.Do("EXISTS", fmt.Sprintf("image:%s", filePath)))
 	if err != nil {
 		return nil, "", err
 	}
@@ -86,8 +81,8 @@ func loadFromCache(filePath string) (image.Image, string, error) {
 
 func cacheUpdateLastAccess(key string) {
 	timestamp := time.Now().Unix()
-	conn.Do("ZADD", "imageaccesstimestamps", timestamp, key)
-	conn.Do("ZINCRBY", "imageaccesscounts", 1, key)
+	Conn.Do("ZADD", "imageaccesstimestamps", timestamp, key)
+	Conn.Do("ZINCRBY", "imageaccesscounts", 1, key)
 }
 
 func pruneCache() {
@@ -96,7 +91,7 @@ func pruneCache() {
 			return
 		}
 
-		totalCacheSize, err := redis.Int(conn.Do("GET", "totalcachesize"))
+		totalCacheSize, err := redis.Int(Conn.Do("GET", "totalcachesize"))
 		if err != nil {
 			return
 		}
@@ -118,7 +113,7 @@ func getCacheRemovalCandidates() []string {
 		set = "imageaccesscounts"
 	}
 	// Remove multiple for better performance (especially LFU)
-	candidates, err := redis.Strings(conn.Do("ZRANGE", set, 0, candidatesToRemove-1))
+	candidates, err := redis.Strings(Conn.Do("ZRANGE", set, 0, candidatesToRemove-1))
 	if err == nil && len(candidates) > 0 {
 		return candidates
 	}
