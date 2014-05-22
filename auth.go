@@ -14,9 +14,50 @@ const (
 	UploadPermission = "upload"
 )
 
+var (
+	permissionsByKey map[string]map[string]bool
+)
+
 func init() {
 	// Change the UUID format to remove surrounding braces and dashes
 	uuid.SwitchFormat(uuid.Clean, true)
+}
+
+func authInit() error {
+	keys, err := listKeys()
+	if err != nil {
+		return err
+	}
+
+	permissionsByKey = make(map[string]map[string]bool)
+
+	// Set up permissions for when there's no API key
+	config := getConfig()
+	permissionsByKey[""] = make(map[string]bool)
+	permissionsByKey[""][GetPermission] = !config.authorisedGet
+	permissionsByKey[""][UploadPermission] = !config.authorisedUpload
+
+	// Set up permissions for API keys
+	for _, key := range keys {
+		permissions, err := infoAboutKey(key)
+		if err != nil {
+			return err
+		}
+		permissionsByKey[key] = make(map[string]bool)
+		for _, permission := range permissions {
+			permissionsByKey[key][permission] = true
+		}
+	}
+
+	return nil
+}
+
+func hasPermission(key, permission string) bool {
+	val, ok := permissionsByKey[key][permission]
+	if ok {
+		return val
+	}
+	return false
 }
 
 func generateKey() (string, error) {

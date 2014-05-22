@@ -19,6 +19,8 @@ const (
 	defaultAllowCustomTransformations = true
 	defaultAllowCustomScale           = true
 	defaultAsyncUploads               = false
+	defaultAuthorisedGet              = false
+	defaultAuthorisedUpload           = false
 	defaultLocalPath                  = "local-images"
 	defaultCacheStrategy              = LRU
 )
@@ -28,15 +30,15 @@ var (
 )
 
 type Config struct {
-	throttlingRate, cacheLimit, uploadMaxFileSize              int
-	allowCustomTransformations, allowCustomScale, asyncUploads bool
-	localPath, cacheStrategy                                   string
-	transformations                                            map[string]Params
-	eagerTransformations                                       []Params
+	throttlingRate, cacheLimit, uploadMaxFileSize                                               int
+	allowCustomTransformations, allowCustomScale, asyncUploads, authorisedGet, authorisedUpload bool
+	localPath, cacheStrategy                                                                    string
+	transformations                                                                             map[string]Params
+	eagerTransformations                                                                        []Params
 }
 
 func configInit(configFilePath string) (Config, error) {
-	config = Config{defaultThrottlingRate, defaultCacheLimit, defaultUploadMaxFileSize, defaultAllowCustomTransformations, defaultAllowCustomScale, defaultAsyncUploads, defaultLocalPath, defaultCacheStrategy, make(map[string]Params), make([]Params, 0)}
+	config = Config{defaultThrottlingRate, defaultCacheLimit, defaultUploadMaxFileSize, defaultAllowCustomTransformations, defaultAllowCustomScale, defaultAsyncUploads, defaultAuthorisedGet, defaultAuthorisedUpload, defaultLocalPath, defaultCacheStrategy, make(map[string]Params), make([]Params, 0)}
 
 	if configFilePath == "" {
 		return config, nil
@@ -73,6 +75,18 @@ func configInit(configFilePath string) (Config, error) {
 	asyncUploads, ok := m["async-uploads"].(bool)
 	if ok {
 		config.asyncUploads = asyncUploads
+	}
+
+	authorisation, ok := m["authorisation"].(map[interface{}]interface{})
+	if ok {
+		get, ok := authorisation["get"].(bool)
+		if ok {
+			config.authorisedGet = get
+		}
+		upload, ok := authorisation["upload"].(bool)
+		if ok {
+			config.authorisedUpload = upload
+		}
 	}
 
 	localPath, ok := m["local-path"].(string)

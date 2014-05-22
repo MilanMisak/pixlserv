@@ -78,6 +78,13 @@ func main() {
 				}
 				log.Printf("Running with config: %+v", config)
 
+				// Initialise authentication
+				err = authInit()
+				if err != nil {
+					log.Println("Authentication initialisation failed:", err)
+					return
+				}
+
 				// Initialise storage
 				err = storageInit(config)
 				if err != nil {
@@ -90,8 +97,8 @@ func main() {
 				if config.throttlingRate > 0 {
 					m.Use(throttler(config.throttlingRate))
 				}
-				m.Get("/image/:parameters/**", transformationHandler)
-				m.Post("/upload", binding.MultipartForm(UploadForm{}), uploadHandler)
+				m.Get("/((?P<apikey>[A-Z0-9]+)/)?image/:parameters/**", transformationHandler)
+				m.Post("/((?P<apikey>[A-Z0-9]+)/)?upload", binding.MultipartForm(UploadForm{}), uploadHandler)
 				go m.Run()
 
 				// Wait for when the program is terminated
@@ -193,6 +200,10 @@ func main() {
 }
 
 func transformationHandler(params martini.Params) (int, string) {
+	if !hasPermission(params["apikey"], GetPermission) {
+		return http.StatusUnauthorized, ""
+	}
+
 	var parameters Params
 	var err error
 	transformationName := parseTransformationName(params["parameters"])
@@ -257,7 +268,11 @@ func transformationHandler(params martini.Params) (int, string) {
 	return http.StatusOK, buffer.String()
 }
 
-func uploadHandler(uf UploadForm) (int, string) {
+func uploadHandler(params martini.Params, uf UploadForm) (int, string) {
+	if !hasPermission(params["apikey"], UploadPermission) {
+		return http.StatusUnauthorized, ""
+	}
+
 	file, err := uf.PhotoUpload.Open()
 	if err != nil {
 		return http.StatusBadRequest, err.Error()
