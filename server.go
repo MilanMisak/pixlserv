@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -19,18 +18,8 @@ import (
 	"github.com/PuerkitoBio/throttled"
 	"github.com/PuerkitoBio/throttled/store"
 	"github.com/codegangsta/cli"
-	"github.com/garyburd/redigo/redis"
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/binding"
-)
-
-const (
-	redisPortEnvVar  = "PIXLSERV_REDIS_PORT"
-	redisDefaultPort = 6379
-)
-
-var (
-	conn redis.Conn
 )
 
 type UploadForm struct {
@@ -43,13 +32,9 @@ func main() {
 	log.SetFlags(0) // Remove the timestamp
 
 	// Connect to redis
-	port, err := strconv.Atoi(os.Getenv(redisPortEnvVar))
+	err := redisInit()
 	if err != nil {
-		port = redisDefaultPort
-	}
-	conn, err = redis.Dial("tcp", ":"+strconv.Itoa(port))
-	if err != nil {
-		return
+		log.Println("Connecting to redis failed", err)
 	}
 
 	app := cli.NewApp()
