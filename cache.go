@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"image"
 	"log"
-	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -14,30 +12,8 @@ import (
 )
 
 const (
-	redisPortEnvVar    = "PIXLSERV_REDIS_PORT"
-	redisDefaultPort   = 6379
 	candidatesToRemove = 5
 )
-
-var (
-	conn redis.Conn
-)
-
-func cacheInit() error {
-	port, err := strconv.Atoi(os.Getenv(redisPortEnvVar))
-	if err != nil {
-		port = redisDefaultPort
-	}
-
-	conn, err = redis.Dial("tcp", ":"+strconv.Itoa(port))
-	if err != nil {
-		return err
-	}
-
-	log.Printf("Cache ready, using port %d", port)
-
-	return nil
-}
 
 func cacheCleanUp() {
 	log.Println("Closing redis connection for the cache")

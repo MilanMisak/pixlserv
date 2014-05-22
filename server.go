@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -18,8 +19,18 @@ import (
 	"github.com/PuerkitoBio/throttled"
 	"github.com/PuerkitoBio/throttled/store"
 	"github.com/codegangsta/cli"
+	"github.com/garyburd/redigo/redis"
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/binding"
+)
+
+const (
+	redisPortEnvVar  = "PIXLSERV_REDIS_PORT"
+	redisDefaultPort = 6379
+)
+
+var (
+	conn redis.Conn
 )
 
 type UploadForm struct {
@@ -27,22 +38,34 @@ type UploadForm struct {
 }
 
 func main() {
+	// Set up logging for CLI
+	log.SetPrefix("")
+	log.SetFlags(0) // Remove the timestamp
+
+	// Connect to redis
+	port, err := strconv.Atoi(os.Getenv(redisPortEnvVar))
+	if err != nil {
+		port = redisDefaultPort
+	}
+	conn, err = redis.Dial("tcp", ":"+strconv.Itoa(port))
+	if err != nil {
+		return
+	}
+
 	app := cli.NewApp()
 	app.Name = "pixlserv"
 	app.Usage = "transform and serve images"
 	app.Version = "1.0"
 	app.Commands = []cli.Command{
 		{
-			Name:      "run",
-			ShortName: "r",
-			Usage:     "runs the server, run [config-file]",
+			Name:  "run",
+			Usage: "Runs the server (run [config-file])",
 			Action: func(c *cli.Context) {
-				// Set up logging
+				// Set up logging for server
 				log.SetPrefix("[pixlserv] ")
-				log.SetFlags(0) // Remove the timestamp
 
 				if len(c.Args()) < 1 {
-					log.Println("Provide a path to a config file")
+					log.Println("You need to provide a path to a config file")
 					return
 				}
 				configFilePath := c.Args().First()
@@ -54,13 +77,6 @@ func main() {
 					return
 				}
 				log.Printf("Running with config: %+v", config)
-
-				// Initialise the cache
-				err = cacheInit()
-				if err != nil {
-					log.Println("Cache initialisation failed:", err)
-					return
-				}
 
 				// Initialise storage
 				err = storageInit(config)
@@ -86,6 +102,89 @@ func main() {
 				// Clean up
 				cacheCleanUp()
 				storageCleanUp()
+			},
+		},
+		{
+			Name:  "api-key",
+			Usage: "Manages API keys",
+			Subcommands: []cli.Command{
+				{
+					Name:  "add",
+					Usage: "Adds a new one",
+					Action: func(c *cli.Context) {
+						key, err := generateKey()
+						if err != nil {
+							log.Println("Adding a new API key failed, please try again")
+							return
+						}
+
+						log.Println("Key added:", key)
+					},
+				},
+				{
+					Name:  "info",
+					Usage: "Shows information about a key (info [key])",
+					Action: func(c *cli.Context) {
+						if len(c.Args()) < 1 {
+							log.Println("You need to provide an existing key")
+							return
+						}
+						key := c.Args().First()
+						permissions, err := infoAboutKey(key)
+						if err != nil {
+							log.Println(err.Error())
+							return
+						}
+						log.Println("Key:", key)
+						log.Println("Permissions:", permissions)
+					},
+				},
+				{
+					Name:  "list",
+					Usage: "Shows all keys",
+					Action: func(c *cli.Context) {
+						keys, err := listKeys()
+						if err != nil {
+							log.Println("Retrieving the list of all keys failed")
+							return
+						}
+
+						log.Println("Keys:", keys)
+					},
+				},
+				{
+					Name:  "modify",
+					Usage: "Modifies permissions for a key (modify [key] [add/remove] [" + authPermissionsOptions() + "])",
+					Action: func(c *cli.Context) {
+						if len(c.Args()) < 3 {
+							log.Println("You need to provide an existing key, operation and a permission")
+							return
+						}
+						key := c.Args().First()
+						err := modifyKey(key, c.Args()[1], c.Args()[2])
+						if err != nil {
+							log.Println(err.Error())
+							return
+						}
+						log.Println("The key has been updated")
+					},
+				},
+				{
+					Name:  "remove",
+					Usage: "Removes an existing key (remove [key])",
+					Action: func(c *cli.Context) {
+						if len(c.Args()) < 1 {
+							log.Println("You need to provide an existing key")
+							return
+						}
+						err := removeKey(c.Args().First())
+						if err != nil {
+							log.Println(err.Error())
+							return
+						}
+						log.Println("The key was successfully removed")
+					},
+				},
 			},
 		},
 	}
