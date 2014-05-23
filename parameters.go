@@ -143,7 +143,7 @@ func parseTransformationName(parametersStr string) string {
 // Turns an image file path and a map of parameters into a file path combining both.
 // It can then be used for file lookups.
 // The function assumes that imagePath contains an extension at the end.
-func createFilePath(imagePath string, parameters Params) (string, error) {
+func createFilePath(imagePath string, parameters *Params) (string, error) {
 	i := strings.LastIndex(imagePath, ".")
 	if i == -1 {
 		return "", fmt.Errorf("invalid image path")

@@ -33,12 +33,12 @@ type Configuration struct {
 	throttlingRate, cacheLimit, uploadMaxFileSize                                               int
 	allowCustomTransformations, allowCustomScale, asyncUploads, authorisedGet, authorisedUpload bool
 	localPath, cacheStrategy                                                                    string
-	transformations                                                                             map[string]Params
-	eagerTransformations                                                                        []Params
+	transformations                                                                             map[string]Transformation
+	eagerTransformations                                                                        []Transformation
 }
 
 func configInit(configFilePath string) error {
-	Config = Configuration{defaultThrottlingRate, defaultCacheLimit, defaultUploadMaxFileSize, defaultAllowCustomTransformations, defaultAllowCustomScale, defaultAsyncUploads, defaultAuthorisedGet, defaultAuthorisedUpload, defaultLocalPath, defaultCacheStrategy, make(map[string]Params), make([]Params, 0)}
+	Config = Configuration{defaultThrottlingRate, defaultCacheLimit, defaultUploadMaxFileSize, defaultAllowCustomTransformations, defaultAllowCustomScale, defaultAsyncUploads, defaultAuthorisedGet, defaultAuthorisedUpload, defaultLocalPath, defaultCacheStrategy, make(map[string]Transformation), make([]Transformation, 0)}
 
 	if configFilePath == "" {
 		return nil
@@ -120,11 +120,25 @@ func configInit(configFilePath string) error {
 					}
 					name, ok := transformation["name"].(string)
 					if ok {
-						Config.transformations[name] = params
-						eager, ok := transformation["eager"].(bool)
+						t := Transformation{&params, nil}
 
+						watermarkMap, ok := transformation["watermark"].(map[interface{}]interface{})
+						if ok {
+							imagePath, ok := watermarkMap["source"].(string)
+							if !ok {
+								return fmt.Errorf("a watermark needs to have a source specified")
+							}
+							// x and y will default to 0 if not found in config
+							x := watermarkMap["x-pos"].(int)
+							y := watermarkMap["y-pos"].(int)
+							t.watermark = &Watermark{imagePath, x, y}
+						}
+
+						Config.transformations[name] = t
+
+						eager, ok := transformation["eager"].(bool)
 						if ok && eager {
-							Config.eagerTransformations = append(Config.eagerTransformations, params)
+							Config.eagerTransformations = append(Config.eagerTransformations, t)
 						}
 					}
 				}

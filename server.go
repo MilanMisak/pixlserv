@@ -189,33 +189,32 @@ func transformationHandler(params martini.Params) (int, string) {
 		return http.StatusUnauthorized, ""
 	}
 
-	var parameters Params
-	var err error
+	var transformation Transformation
 	transformationName := parseTransformationName(params["parameters"])
 	if transformationName != "" {
 		var ok bool
-		parameters, ok = Config.transformations[transformationName]
+		transformation, ok = Config.transformations[transformationName]
 		if !ok {
 			return http.StatusBadRequest, "Unknown transformation: " + transformationName
 		}
 	} else if Config.allowCustomTransformations {
-		parameters, err = parseParameters(params["parameters"])
+		parameters, err := parseParameters(params["parameters"])
+		if err != nil {
+			return http.StatusBadRequest, err.Error()
+		}
+		transformation = Transformation{&parameters, nil}
 	} else {
 		return http.StatusBadRequest, "Custom transformations not allowed"
 	}
 	baseImagePath, scale := parseBasePathAndScale(params["_1"])
 	if Config.allowCustomScale {
-		parameters = parameters.WithScale(scale)
+		parameters := transformation.params.WithScale(scale)
+		transformation.params = &parameters
 	}
-
-	if err != nil {
-		return http.StatusBadRequest, err.Error()
-	}
-	log.Println("Parameters:", parameters)
 
 	// Check if the image with the given parameters already exists
 	// and return it
-	fullImagePath, _ := createFilePath(baseImagePath, parameters)
+	fullImagePath, _ := createFilePath(baseImagePath, transformation.params)
 	img, format, err := loadFromCache(fullImagePath)
 	if err == nil {
 		var buffer bytes.Buffer
@@ -234,7 +233,7 @@ func transformationHandler(params martini.Params) (int, string) {
 		return http.StatusInternalServerError, err.Error()
 	}
 
-	imgNew := transformCropAndResize(img, parameters)
+	imgNew := transformCropAndResize(img, &transformation)
 
 	var buffer bytes.Buffer
 	err = writeImage(imgNew, format, &buffer)
@@ -297,9 +296,9 @@ func uploadHandler(params martini.Params, uf UploadForm) (int, string) {
 	// Eager transformations
 	if len(Config.eagerTransformations) > 0 {
 		go func() {
-			for _, parameters := range Config.eagerTransformations {
-				imgNew := transformCropAndResize(img, parameters)
-				fullImagePath, _ := createFilePath(baseImagePath, parameters)
+			for _, transformation := range Config.eagerTransformations {
+				imgNew := transformCropAndResize(img, &transformation)
+				fullImagePath, _ := createFilePath(baseImagePath, transformation.params)
 				addToCache(fullImagePath, imgNew, format)
 			}
 		}()

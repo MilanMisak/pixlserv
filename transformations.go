@@ -6,13 +6,23 @@ import (
 	"image"
 	"image/color"
 	"image/draw"
-
-	//"log"
+	"log"
 
 	"github.com/nfnt/resize"
 )
 
-func transformCropAndResize(img image.Image, parameters Params) (imgNew image.Image) {
+type Transformation struct {
+	params    *Params
+	watermark *Watermark
+}
+
+type Watermark struct {
+	imagePath string
+	x, y      int
+}
+
+func transformCropAndResize(img image.Image, transformation *Transformation) (imgNew image.Image) {
+	parameters := transformation.params
 	width := parameters.width
 	height := parameters.height
 	gravity := parameters.gravity
@@ -87,6 +97,36 @@ func transformCropAndResize(img image.Image, parameters Params) (imgNew image.Im
 			}
 		}
 		imgNew = gray
+	}
+
+	if transformation.watermark != nil {
+		w := transformation.watermark
+		watermarkSrc, _, err := loadImage(w.imagePath)
+		if err != nil {
+			log.Println("Error: could not load a watermark")
+			return
+		}
+
+		bounds := imgNew.Bounds()
+		watermarkBounds := watermarkSrc.Bounds()
+
+		// Make sure we have a transparent watermark if possible
+		watermark := image.NewRGBA(watermarkBounds)
+		draw.Draw(watermark, watermarkBounds, watermarkSrc, watermarkBounds.Min, draw.Src)
+
+		wX := w.x
+		wY := w.y
+		if wX < 0 {
+			wX += bounds.Dx() - watermarkBounds.Dx()
+		}
+		if wY < 0 {
+			wY += bounds.Dy() - watermarkBounds.Dy()
+		}
+		watermarkRect := image.Rect(wX, wY, watermarkBounds.Dx()+wX, watermarkBounds.Dy()+wY)
+		finalImage := image.NewRGBA(bounds)
+		draw.Draw(finalImage, bounds, imgNew, bounds.Min, draw.Src)
+		draw.Draw(finalImage, watermarkRect, watermark, watermarkBounds.Min, draw.Over)
+		imgNew = finalImage.SubImage(bounds)
 	}
 
 	return
