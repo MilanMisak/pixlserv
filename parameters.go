@@ -43,7 +43,6 @@ const (
 )
 
 var (
-	path_re                = regexp.MustCompile("(.+)@(\\d+)x\\.([^\\.]+)$")
 	transformation_name_re = regexp.MustCompile("^t_([\\w-_]+)$")
 )
 
@@ -117,17 +116,6 @@ func parseParameters(parametersStr string) (Params, error) {
 	}
 
 	return params, nil
-}
-
-// Gets (image.jpg, 2) from image@2x.jpg
-func parseBasePathAndScale(path string) (string, int) {
-	matches := path_re.FindStringSubmatch(path)
-	if len(matches) == 0 {
-		return path, 1
-	}
-	path = matches[1] + "." + matches[3]
-	scale, _ := strconv.Atoi(matches[2])
-	return path, scale
 }
 
 // Parses transformation name from a parameters string (e.g. photo from t_photo).

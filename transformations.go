@@ -101,21 +101,45 @@ func transformCropAndResize(img image.Image, transformation *Transformation) (im
 
 	if transformation.watermark != nil {
 		w := transformation.watermark
-		watermarkSrc, _, err := loadImage(w.imagePath)
-		if err != nil {
-			log.Println("Error: could not load a watermark")
-			return
+
+		var watermarkSrcScaled image.Image
+		var watermarkBounds image.Rectangle
+
+		// Try to load a scaled watermark first
+		if scale > 1 {
+			scaledPath, err := constructScaledPath(w.imagePath, scale)
+			if err != nil {
+				log.Println("Error:", err)
+				return
+			}
+
+			watermarkSrc, _, err := loadImage(scaledPath)
+			if err != nil {
+				log.Println("Error: could not load a watermark", err)
+			} else {
+				watermarkBounds = watermarkSrc.Bounds()
+				watermarkSrcScaled = watermarkSrc
+			}
+		}
+
+		if watermarkSrcScaled == nil {
+			watermarkSrc, _, err := loadImage(w.imagePath)
+			if err != nil {
+				log.Println("Error: could not load a watermark", err)
+				return
+			}
+			watermarkBounds = image.Rect(0, 0, watermarkSrc.Bounds().Max.X*scale, watermarkSrc.Bounds().Max.Y*scale)
+			watermarkSrcScaled = resize.Resize(uint(watermarkBounds.Max.X), uint(watermarkBounds.Max.Y), watermarkSrc, resize.Bilinear)
 		}
 
 		bounds := imgNew.Bounds()
-		watermarkBounds := watermarkSrc.Bounds()
 
 		// Make sure we have a transparent watermark if possible
 		watermark := image.NewRGBA(watermarkBounds)
-		draw.Draw(watermark, watermarkBounds, watermarkSrc, watermarkBounds.Min, draw.Src)
+		draw.Draw(watermark, watermarkBounds, watermarkSrcScaled, watermarkBounds.Min, draw.Src)
 
-		wX := w.x
-		wY := w.y
+		wX := w.x * scale
+		wY := w.y * scale
 		if wX < 0 {
 			wX += bounds.Dx() - watermarkBounds.Dx()
 		}
