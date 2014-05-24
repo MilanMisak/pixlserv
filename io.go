@@ -22,7 +22,7 @@ func writeImage(img image.Image, format string, w io.Writer) error {
 	if format == "png" {
 		return png.Encode(w, img)
 	}
-	return jpeg.Encode(w, img, nil)
+	return jpeg.Encode(w, img, &jpeg.Options{Config.jpegQuality})
 }
 
 func readImage(data []byte, format string) (image.Image, error) {

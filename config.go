@@ -15,8 +15,9 @@ const (
 )
 
 const (
-	defaultThrottlingRate             = 60              // Requests per min
-	defaultCacheLimit                 = 0               // No. of bytes
+	defaultThrottlingRate             = 60 // Requests per min
+	defaultCacheLimit                 = 0  // No. of bytes
+	defaultJpegQuality                = 75
 	defaultUploadMaxFileSize          = 5 * 1024 * 1024 // No. of bytes
 	defaultAllowCustomTransformations = true
 	defaultAllowCustomScale           = true
@@ -34,7 +35,7 @@ var (
 
 // Configuration specifies server configuration options
 type Configuration struct {
-	throttlingRate, cacheLimit, uploadMaxFileSize                                               int
+	throttlingRate, cacheLimit, jpegQuality, uploadMaxFileSize                                  int
 	allowCustomTransformations, allowCustomScale, asyncUploads, authorisedGet, authorisedUpload bool
 	localPath, cacheStrategy                                                                    string
 	transformations                                                                             map[string]Transformation
@@ -42,7 +43,7 @@ type Configuration struct {
 }
 
 func configInit(configFilePath string) error {
-	Config = Configuration{defaultThrottlingRate, defaultCacheLimit, defaultUploadMaxFileSize, defaultAllowCustomTransformations, defaultAllowCustomScale, defaultAsyncUploads, defaultAuthorisedGet, defaultAuthorisedUpload, defaultLocalPath, defaultCacheStrategy, make(map[string]Transformation), make([]Transformation, 0)}
+	Config = Configuration{defaultThrottlingRate, defaultCacheLimit, defaultJpegQuality, defaultUploadMaxFileSize, defaultAllowCustomTransformations, defaultAllowCustomScale, defaultAsyncUploads, defaultAuthorisedGet, defaultAuthorisedUpload, defaultLocalPath, defaultCacheStrategy, make(map[string]Transformation), make([]Transformation, 0)}
 
 	if configFilePath == "" {
 		return nil
@@ -59,6 +60,11 @@ func configInit(configFilePath string) error {
 	throttlingRate, ok := m["throttling-rate"].(int)
 	if ok && throttlingRate >= 0 {
 		Config.throttlingRate = throttlingRate
+	}
+
+	jpegQuality, ok := m["jpeg-quality"].(int)
+	if ok && jpegQuality >= 1 && jpegQuality <= 100 {
+		Config.jpegQuality = jpegQuality
 	}
 
 	uploadMaxFileSize, ok := m["upload-max-file-size"].(int)
