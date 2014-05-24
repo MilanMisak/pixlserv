@@ -8,7 +8,9 @@ import (
 )
 
 const (
+	// LRU = Least recently used
 	LRU = "LRU"
+	// LFU = Least frequently used
 	LFU = "LFU"
 )
 
@@ -26,9 +28,11 @@ const (
 )
 
 var (
+	// Config is a global configuration object
 	Config Configuration
 )
 
+// Configuration specifies server configuration options
 type Configuration struct {
 	throttlingRate, cacheLimit, uploadMaxFileSize                                               int
 	allowCustomTransformations, allowCustomScale, asyncUploads, authorisedGet, authorisedUpload bool

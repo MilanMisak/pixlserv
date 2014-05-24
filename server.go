@@ -22,6 +22,7 @@ import (
 	"github.com/martini-contrib/binding"
 )
 
+// UploadForm is a form structure to use when an image is POSTed to the server
 type UploadForm struct {
 	PhotoUpload *multipart.FileHeader `form:"photo"`
 }

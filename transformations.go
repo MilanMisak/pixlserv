@@ -11,11 +11,13 @@ import (
 	"github.com/nfnt/resize"
 )
 
+// Transformation specifies parameters and a watermark to be used when transforming an image
 type Transformation struct {
 	params    *Params
 	watermark *Watermark
 }
 
+// Watermark specifies a watermark to be applied to an image during a transformation
 type Watermark struct {
 	imagePath string
 	x, y      int

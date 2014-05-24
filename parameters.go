@@ -43,7 +43,7 @@ const (
 )
 
 var (
-	transformation_name_re = regexp.MustCompile("^t_([\\w-_]+)$")
+	transformationNameRe = regexp.MustCompile("^t_([\\w-_]+)$")
 )
 
 // Params is a struct of parameters specifying an image transformation
@@ -57,7 +57,7 @@ func (p Params) ToString() string {
 	return fmt.Sprintf("%s_%s,%s_%s,%s_%d,%s_%d,%s_%s,%s_%d", parameterCropping, p.cropping, parameterGravity, p.gravity, parameterHeight, p.height, parameterWidth, p.width, parameterFilter, p.filter, parameterScale, p.scale)
 }
 
-// Returns a copy of a Params struct with the scale set to the given value.
+// WithScale returns a copy of a Params struct with the scale set to the given value
 func (p Params) WithScale(scale int) Params {
 	return Params{p.width, p.height, scale, p.cropping, p.gravity, p.filter}
 }
@@ -121,7 +121,7 @@ func parseParameters(parametersStr string) (Params, error) {
 // Parses transformation name from a parameters string (e.g. photo from t_photo).
 // Returns "" if there is no transformation name.
 func parseTransformationName(parametersStr string) string {
-	matches := transformation_name_re.FindStringSubmatch(parametersStr)
+	matches := transformationNameRe.FindStringSubmatch(parametersStr)
 	if len(matches) == 0 {
 		return ""
 	}

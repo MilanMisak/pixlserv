@@ -10,7 +10,9 @@ import (
 )
 
 const (
-	GetPermission    = "get"
+	// GetPermission = permission to get (and transform) images
+	GetPermission = "get"
+	// UploadPermission = permission to upload images
 	UploadPermission = "upload"
 )
 
@@ -92,10 +94,10 @@ func modifyKey(key, op, permission string) error {
 		return err
 	}
 	if op != "add" && op != "remove" {
-		return errors.New("Modifier needs to be 'add' or 'remove'")
+		return errors.New("modifier needs to be 'add' or 'remove'")
 	}
 	if permission != GetPermission && permission != UploadPermission {
-		return fmt.Errorf("Modifier needs to end with a valid permission: %s or %s", GetPermission, UploadPermission)
+		return fmt.Errorf("modifier needs to end with a valid permission: %s or %s", GetPermission, UploadPermission)
 	}
 	if op == "add" {
 		_, err = Conn.Do("SADD", "key:"+key, permission)
@@ -128,7 +130,7 @@ func checkKeyExists(key string) error {
 		return err
 	}
 	if !exists {
-		return fmt.Errorf("Key does not exist")
+		return fmt.Errorf("key does not exist")
 	}
 	return nil
 }
