@@ -1,14 +1,30 @@
 # Pixlserv
 
-A Go server for serving and processing images.
+A Go server for processing and serving images.
 
-Images are requested from the server by accessing a URL of the following format: `http://server/parameters/filename`. Parameters are strings like `transformation_value` connected with commas, e.g. `w_400,h_300`. A full URL could look like this: `http://pixlserv.com/w_400,h_300/logo.jpg`.
+Images are requested from the server by accessing a URL of the following format: `http://server/parameters/filename`. Parameters are strings like `transformation_value` connected with commas, e.g. `w_400,h_300`. A full URL could look like this: `http://pixlserv.com/w_400,h_300/logo.jpg`. Authorisation can be easily set up to require an API key between `server` and `parameters` in the example URL above.
 
 
 ## Installation instructions
 
-TODO
+TODO - test this out
 
+```
+git clone https://github.com/ReshNesh/pixlserv
+go build
+```
+
+## Usage
+
+Create a directory `local-images` with some JPEG or PNG images in the same directory where you installed pixlserv. Then run:
+
+```
+./pixlserv run config/example.yaml
+```
+
+This will run the server using a simple configuration defined by [config/example.yaml](config/example.yaml). You are encouraged to look at the Configuration section below, create a copy of the sample configuration file and customise it to suit your needs.
+
+Assuming you copied a file `cat.jpg` to the `local-images` directory you can now access http://localhost:3000/image/t_square/cat.jpg using your browser.
 
 ## Configuration
 
