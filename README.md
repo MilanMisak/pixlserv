@@ -16,7 +16,7 @@ go build
 
 ## Usage
 
-Create a directory `local-images` with some JPEG or PNG images in the same directory where you installed pixlserv. Then run:
+Start redis (see the Requirements section below for details). Create a directory `local-images` with some JPEG or PNG images in the same directory where you installed pixlserv. Then run:
 
 ```
 ./pixlserv run config/example.yaml
@@ -31,10 +31,18 @@ Assuming you copied a file `cat.jpg` to the `local-images` directory you can now
 Pixlserv supports 2 types of underlying storage: local file system and Amazon S3. If environment variables `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `PIXLSERV_S3_BUCKET` are detected the server will try to connect to S3 given the given credentials. Otherwise, local storage will be used. The path at which images will be stored locally can be specified using the `local-path` configuration option.
 
 [//]: # (TODO: more info)
-Other configuration options include `throttling-rate`, `allow-custom-transformations`, `allow-custom-scale`, `async-uploads` and `transformations`. See [config/example.yaml](config/example.yaml) for an example.
+Other configuration options include `throttling-rate`, `allow-custom-transformations`, `allow-custom-scale`, `async-uploads`, `authorisation`, `cache`, `jpeg-quality`, `transformations` and `upload-max-file-size`. See [config/example.yaml](config/example.yaml) for an example.
 
 
 ## Supported transformations
+
+### Resizing
+
+| Parameter | Meaning                       |
+| --------- | ----------------------------- |
+| h_X       | sets height of the image to X |
+| w_X       | sets width of the image to X  |
+
 
 ### Cropping
 
@@ -84,4 +92,4 @@ Named transformations can also be set to be `eager`. Such transformations will b
 
 ## Requirements
 
-A running [http://redis.io/](redis) instance is required for the server to be able to maintain a cache of images. Check the redis website to find out how to download and install redis. If you run redis on a different port than the default 6379 please make sure to set up a `PIXLSERV_REDIS_PORT` environment variable with the port you are using.
+A running [redis](http://redis.io/) instance is required for the server to be able to maintain a cache of images. Check the redis website to find out how to download and install redis. If you run redis on a different port than the default 6379 please make sure to set up a `PIXLSERV_REDIS_PORT` environment variable with the port you are using.
