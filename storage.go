@@ -72,10 +72,7 @@ type localStorage struct {
 }
 
 func (s *localStorage) init() error {
-	path := os.Getenv(Config.localPath)
-	if path == "" {
-		path = defaultLocalPath
-	}
+	path := Config.localPath
 	s.path = path
 	return nil
 }
