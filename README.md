@@ -5,7 +5,7 @@ A Go server for processing and serving images.
 Images are requested from the server by accessing a URL of the following format: `http://server/parameters/filename`. Parameters are strings like `transformation_value` connected with commas, e.g. `w_400,h_300`. A full URL could look like this: `http://pixlserv.com/w_400,h_300/logo.jpg`. Authorisation can be easily set up to require an API key between `server` and `parameters` in the example URL above.
 
 
-## Installation instructions
+## Installation
 
 TODO - test this out
 
@@ -24,7 +24,7 @@ Create a directory `local-images` with some JPEG or PNG images in the same direc
 
 This will run the server using a simple configuration defined by [config/example.yaml](config/example.yaml). You are encouraged to look at the Configuration section below, create a copy of the sample configuration file and customise it to suit your needs.
 
-Assuming you copied a file `cat.jpg` to the `local-images` directory you can now access http://localhost:3000/image/t_square/cat.jpg using your browser.
+Assuming you copied a file `cat.jpg` to the `local-images` directory you can now access [http://localhost:3000/image/t_square/cat.jpg](http://localhost:3000/image/t_square/cat.jpg) using your browser.
 
 ## Configuration
 
@@ -73,3 +73,15 @@ For some cropping modes gravity determines which part of the image will be shown
 ### Scaling
 
 Scales the image up to support retina devices. For example to generate a thumbnail of an image (`image.jpg`) at twice the size request `image@2x.jpg`. Only positive integers are accepted as valid scaling factors.
+
+
+### Named transformations
+
+In your configuration file you can specify transformations using parameters described above and then give each transformation a name. The transformation can then be invoked using a `t_mytransformation` URL parameter.
+
+Named transformations can also be set to be `eager`. Such transformations will be run for all images uploaded using the server straight after the upload happens.
+
+
+## Requirements
+
+A running [http://redis.io/](redis) instance is required for the server to be able to maintain a cache of images. Check the redis website to find out how to download and install redis. If you run redis on a different port than the default 6379 please make sure to set up a `PIXLSERV_REDIS_PORT` environment variable with the port you are using.
