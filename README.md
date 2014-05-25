@@ -7,7 +7,7 @@ Images are requested from the server by accessing a URL of the following format:
 
 ## Installation
 
-TODO - test this out
+[//]: # (TODO: test this out)
 
 ```
 git clone https://github.com/ReshNesh/pixlserv
@@ -22,7 +22,7 @@ Start redis (see the Requirements section below for details). Create a directory
 ./pixlserv run config/example.yaml
 ```
 
-This will run the server using a simple configuration defined by [config/example.yaml](config/example.yaml). You are encouraged to look at the Configuration section below, create a copy of the sample configuration file and customise it to suit your needs.
+This will run the server using a simple configuration defined in [config/example.yaml](config/example.yaml). You are encouraged to look at the Configuration section below, create a copy of the sample configuration file and customise it to suit your needs.
 
 Assuming you copied a file `cat.jpg` to the `local-images` directory you can now access [http://localhost:3000/image/t_square/cat.jpg](http://localhost:3000/image/t_square/cat.jpg) using your browser.
 
@@ -78,7 +78,7 @@ For some cropping modes gravity determines which part of the image will be shown
 | f_grayscale | grayscale |
 
 
-### Scaling
+### Scaling (retina)
 
 Scales the image up to support retina devices. For example to generate a thumbnail of an image (`image.jpg`) at twice the size request `image@2x.jpg`. Only positive integers are accepted as valid scaling factors.
 
@@ -88,6 +88,15 @@ Scales the image up to support retina devices. For example to generate a thumbna
 In your configuration file you can specify transformations using parameters described above and then give each transformation a name. The transformation can then be invoked using a `t_mytransformation` URL parameter.
 
 Named transformations can also be set to be `eager`. Such transformations will be run for all images uploaded using the server straight after the upload happens.
+
+Another feature of named transformations are watermarks. Images can be automatically watermarked using an image stored along with all the other images locally or in S3. Please refer to the example config file for details. Note: if you supply scaled up watermarks (`watermark@2x.png`) these will be used for scaled images.
+
+
+## Authentication
+
+The server can be set up to require an API key to be passed as part of the URL when requesting or uploading an image. This is done in the `authorisation` section of a configuration file.
+
+API keys can be added, removed and modified by running `./pixlserv api-key COMMAND`. Run this without `COMMAND` to see all the available commands. Once API keys are modified, the server needs to be restarted to use the new settings.
 
 
 ## Requirements
