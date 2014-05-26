@@ -6,6 +6,6 @@
 .ctrlp-similar/
 local-images/
 test-config/
-uuid/
-pixlserv
 Makefile
+/pixlserv
+/uuid/
