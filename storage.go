@@ -176,7 +176,7 @@ func (s *s3Storage) saveImage(img image.Image, format string, imagePath string) 
 	}
 
 	size := buffer.Len()
-	return size, s.bucket.Put(imagePath, buffer.Bytes(), "image/"+format, s3.PublicRead)
+	return size, s.bucket.Put(imagePath, buffer.Bytes(), "image/"+format, s3.Private)
 }
 
 func (s *s3Storage) deleteImage(imagePath string) error {

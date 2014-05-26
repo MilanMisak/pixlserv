@@ -283,26 +283,32 @@ func uploadHandler(params martini.Params, uf UploadForm) (int, string) {
 	baseImagePath := fmt.Sprintf("%d.%s", time.Now().Unix(), strings.Replace(format, "jpeg", "jpg", 1))
 	log.Printf("Uploading %s", baseImagePath)
 
-	if Config.asyncUploads {
-		go func() {
-			saveImage(img, format, baseImagePath)
-		}()
-	} else {
-		_, err := saveImage(img, format, baseImagePath)
-		if err != nil {
-			return http.StatusInternalServerError, err.Error()
-		}
-	}
-
 	// Eager transformations
-	if len(Config.eagerTransformations) > 0 {
-		go func() {
+	eagerlyTransform := func() {
+		if len(Config.eagerTransformations) > 0 {
 			for _, transformation := range Config.eagerTransformations {
 				imgNew := transformCropAndResize(img, &transformation)
 				fullImagePath, _ := createFilePath(baseImagePath, transformation.params)
 				addToCache(fullImagePath, imgNew, format)
 			}
+		}
+	}
+
+	if Config.asyncUploads {
+		go func() {
+			_, err := saveImage(img, format, baseImagePath)
+			if err != nil {
+				log.Println("Error saving image:", err)
+				return
+			}
+			go eagerlyTransform()
 		}()
+	} else {
+		_, err := saveImage(img, format, baseImagePath)
+		if err != nil {
+			return http.StatusInternalServerError, "Error saving image: " + err.Error()
+		}
+		go eagerlyTransform()
 	}
 
 	return http.StatusOK, ""

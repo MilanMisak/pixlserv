@@ -14,6 +14,7 @@ git clone https://github.com/ReshNesh/pixlserv
 go build
 ```
 
+
 ## Usage
 
 Start redis (see the Requirements section below for details). Create a directory `local-images` with some JPEG or PNG images in the same directory where you installed pixlserv. Then run:
@@ -26,12 +27,32 @@ This will run the server using a simple configuration defined in [config/example
 
 Assuming you copied a file `cat.jpg` to the `local-images` directory you can now access [http://localhost:3000/image/t_square/cat.jpg](http://localhost:3000/image/t_square/cat.jpg) using your browser.
 
+
 ## Configuration
 
 Pixlserv supports 2 types of underlying storage: local file system and Amazon S3. If environment variables `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `PIXLSERV_S3_BUCKET` are detected the server will try to connect to S3 given the given credentials. Otherwise, local storage will be used. The path at which images will be stored locally can be specified using the `local-path` configuration option.
 
 [//]: # (TODO: more info)
 Other configuration options include `throttling-rate`, `allow-custom-transformations`, `allow-custom-scale`, `async-uploads`, `authorisation`, `cache`, `jpeg-quality`, `transformations` and `upload-max-file-size`. See [config/example.yaml](config/example.yaml) for an example.
+
+### Amazon S3
+
+To use Amazon S3 as your storage create a bucket and a user with access to the bucket and at least the following permissions: `s3:GetObject`, `s3:DeleteObject`, `s3:PutObject` and `s3:ListBucket`. Make sure to set up the environment variables mentioned above to make the server connect to S3 instead of using local storage.
+
+The policy for an S3 user should contain something like this (where `<BUCKET>` is the name of your bucket):
+
+```
+"Effect": "Allow",
+"Action": [
+    "s3:DeleteObject",
+    "s3:GetObject",
+    "s3:ListBucket",
+    "s3:PutObject"
+],
+"Resource": [
+    "arn:aws:s3:::<BUCKET>/*"
+]
+```
 
 
 ## Supported transformations
