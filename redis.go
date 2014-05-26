@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/garyburd/redigo/redis"
+	"github.com/soveran/redisurl"
 )
 
 const (
@@ -21,7 +22,7 @@ func redisInit() error {
 	url := os.Getenv(redisUrlEnvVar)
 	var err error
 	if url != "" {
-		Conn, err = redis.Dial("tcp", url)
+		Conn, err = redisurl.ConnectToURL(url)
 		return err
 	} else {
 		port, err := strconv.Atoi(os.Getenv(redisPortEnvVar))
