@@ -1,0 +1,56 @@
+{
+	"ImportPath": "github.com/ReshNesh/pixlserv",
+	"GoVersion": "go1.2",
+	"Deps": [
+		{
+			"ImportPath": "github.com/PuerkitoBio/throttled",
+			"Rev": "65b17baf7dd2924b3085f66e4f5677e21cf76c06"
+		},
+		{
+			"ImportPath": "github.com/codegangsta/cli",
+			"Comment": "1.0.0-65-g820deef",
+			"Rev": "820deefc9031d101f085ef773425fc6ca7a5363e"
+		},
+		{
+			"ImportPath": "github.com/codegangsta/inject",
+			"Rev": "9aea7a2fa5b79ef7fc00f63a575e72df33b4e886"
+		},
+		{
+			"ImportPath": "github.com/garyburd/redigo/redis",
+			"Rev": "ed54f4ed86a815cf09870e4bd1a10a2ee39a4308"
+		},
+		{
+			"ImportPath": "github.com/go-martini/martini",
+			"Comment": "v0.1-153-gbaa4221",
+			"Rev": "baa42219288cdd775874794381aa987144012263"
+		},
+		{
+			"ImportPath": "github.com/golang/groupcache/lru",
+			"Rev": "d781998583680cda80cf61e0b37dd0cd8da2eb52"
+		},
+		{
+			"ImportPath": "github.com/martini-contrib/binding",
+			"Rev": "3c6304eca9089d5f082b80bf6bbcb8ce1c34c040"
+		},
+		{
+			"ImportPath": "github.com/mitchellh/goamz/aws",
+			"Rev": "87d3f9ee12e143e7fb718e1ab0a2dddeb4bd0e26"
+		},
+		{
+			"ImportPath": "github.com/mitchellh/goamz/s3",
+			"Rev": "87d3f9ee12e143e7fb718e1ab0a2dddeb4bd0e26"
+		},
+		{
+			"ImportPath": "github.com/nfnt/resize",
+			"Rev": "8f586c4f0611e12ce80188058a9a1010bef74374"
+		},
+		{
+			"ImportPath": "github.com/twinj/uuid",
+			"Rev": "32b0afc3a40d23189f42d9a9fe441251386b99e3"
+		},
+		{
+			"ImportPath": "gopkg.in/yaml.v1",
+			"Rev": "b0c168ac0cf9493da1f9bb76c34b26ffef940b4a"
+		}
+	]
+}
