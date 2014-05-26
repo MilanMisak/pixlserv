@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"regexp"
 
 	"gopkg.in/yaml.v1"
 )
@@ -130,6 +131,10 @@ func configInit(configFilePath string) error {
 					}
 					name, ok := transformation["name"].(string)
 					if ok {
+						if !isValidTransformationName(name) {
+							return fmt.Errorf("invalid transformation name: %s", name)
+						}
+
 						t := Transformation{&params, nil}
 
 						watermarkMap, ok := transformation["watermark"].(map[interface{}]interface{})
@@ -157,4 +162,12 @@ func configInit(configFilePath string) error {
 	}
 
 	return nil
+}
+
+var (
+	transformationNameConfigRe = regexp.MustCompile("^([0-9A-Za-z-]+)$")
+)
+
+func isValidTransformationName(name string) bool {
+	return transformationNameConfigRe.MatchString(name)
 }

@@ -43,7 +43,7 @@ const (
 )
 
 var (
-	transformationNameRe = regexp.MustCompile("^t_([\\w-_]+)$")
+	transformationNameRe = regexp.MustCompile("^t_([0-9A-Za-z-]+)$")
 )
 
 // Params is a struct of parameters specifying an image transformation
