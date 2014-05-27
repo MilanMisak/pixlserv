@@ -27,7 +27,7 @@ import (
 
 // UploadForm is a form structure to use when an image is POSTed to the server
 type UploadForm struct {
-	PhotoUpload *multipart.FileHeader `form:"photo"`
+	PhotoUpload *multipart.FileHeader `form:"image"`
 }
 
 var (
@@ -300,6 +300,10 @@ func uploadSuccess(imagePath string) string {
 func uploadHandler(params martini.Params, uf UploadForm) (int, string) {
 	if !hasPermission(params["apikey"], UploadPermission) {
 		return http.StatusUnauthorized, uploadError("API key invalid or missing")
+	}
+
+	if uf.PhotoUpload == nil {
+		return http.StatusBadRequest, uploadError("missing image field")
 	}
 
 	file, err := uf.PhotoUpload.Open()

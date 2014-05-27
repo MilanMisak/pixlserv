@@ -1,8 +1,14 @@
 # Pixlserv
 
-A Go server for processing and serving images.
+A Go server for on-the-fly processing and serving images. A self-hosted image management solution for websites and mobile apps.
 
-Images are requested from the server by accessing a URL of the following format: `http://server/parameters/filename`. Parameters are strings like `transformation_value` connected with commas, e.g. `w_400,h_300`. A full URL could look like this: `http://pixlserv.com/w_400,h_300/logo.jpg`. Authorisation can be easily set up to require an API key between `server` and `parameters` in the example URL above.
+1. Get the code and install the server
+
+2. Connect it to Amazon S3 or use local storage, connect it to redis
+
+3. Start uploading and transforming images
+
+This is version 0.1. All feedback welcome: hello _at_ reshnesh.com
 
 
 ## Installation
@@ -33,6 +39,14 @@ go build
 
 
 ## Usage
+
+Images are requested from the server by accessing a URL of the following format: `http://server/parameters/filename`. Parameters are strings like `transformation_value` connected with commas, e.g. `w_400,h_300`. A full URL could look like this: `http://pixlserv.com/w_400,h_300/logo.jpg`. Once an image is transformed in some way the copy is cached which means it can be accessed quickly next time.
+
+Upload is done by sending an image file as an `image` field of a POST request to `http://server/upload`.
+
+Authorisation can be easily set up to require an API key between `server` and `parameters` (or `upload`) in the example URLs above.
+
+### Using pixlserv locally
 
 Start redis (see the [Requirements](#requirements) section for details). Create a directory `local-images` with some JPEG or PNG images in the same directory where you installed pixlserv. Then run:
 
@@ -219,4 +233,5 @@ A running [redis](http://redis.io/) instance is required for the server to be ab
 
 * a Javascript library for easier uploads from the browser
 * Django, Rails support for generating image URLs on the server
+* GUI to manage images in the browser
 * a sample application
