@@ -10,20 +10,20 @@ import (
 
 const (
 	redisPortEnvVar  = "PIXLSERV_REDIS_PORT"
-	redisUrlEnvVar   = "PIXLSERV_REDIS_URL"
+	redisURLEnvVar   = "PIXLSERV_REDIS_URL"
 	redisDefaultPort = 6379
 )
 
 var (
+	// Conn is a global redis connection object
 	Conn redis.Conn
 )
 
 func redisInit() error {
-	url := os.Getenv(redisUrlEnvVar)
+	url := os.Getenv(redisURLEnvVar)
 	var err error
 	if url != "" {
 		Conn, err = redisurl.ConnectToURL(url)
-		return err
 	} else {
 		port, err := strconv.Atoi(os.Getenv(redisPortEnvVar))
 		if err != nil {
@@ -31,8 +31,8 @@ func redisInit() error {
 		}
 
 		Conn, err = redis.Dial("tcp", ":"+strconv.Itoa(port))
-		return err
 	}
+	return err
 }
 
 func redisCleanUp() {

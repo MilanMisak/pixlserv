@@ -31,7 +31,7 @@ type UploadForm struct {
 }
 
 var (
-	uploadUrlRe = regexp.MustCompile("/upload$")
+	uploadURLRe = regexp.MustCompile("/upload$")
 )
 
 func init() {
@@ -95,7 +95,7 @@ func main() {
 					m.Use(throttler(Config.throttlingRate))
 				}
 				m.Use(func(res http.ResponseWriter, req *http.Request) {
-					if uploadUrlRe.MatchString(req.URL.Path) {
+					if uploadURLRe.MatchString(req.URL.Path) {
 						// The upload handler returns JSON
 						res.Header().Set("Content-Type", "application/json")
 					}
@@ -273,6 +273,7 @@ func transformationHandler(params martini.Params) (int, string) {
 	return http.StatusOK, buffer.String()
 }
 
+// UploadResponse is a struct to represent a JSON response for the upload handler
 type UploadResponse struct {
 	Status       string `json:"status"`
 	ErrorMessage string `json:"errorMessage"`
