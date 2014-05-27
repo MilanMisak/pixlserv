@@ -44,6 +44,69 @@ This will run the server using a simple configuration defined in [config/example
 
 Assuming you copied a file `cat.jpg` to the `local-images` directory you can now access [http://localhost:3000/image/t_square/cat.jpg](http://localhost:3000/image/t_square/cat.jpg) using your browser.
 
+### Usage on Heroku
+
+Heroku is a popular platform-as-a-service (PaaS) provider so we will have a look at a more detailed description of how to make pixlserv work on Heroku's infrastructure.
+
+As Heroku uses an [ephemeral filesystem](https://devcenter.heroku.com/articles/dynos#ephemeral-filesystem) which doesn't allow persistent storage of data you will need to use Amazon S3. Please make sure you have a bucket and a user authorised to access the bucket using the instructions in the [Amazon S3](Amazon S3) section below.
+
+Clone this repository anywhere on your disk. If you do not plan to run the server locally it doesn't need to be in Go's workspace.
+
+Important: switch to the `heroku branch`:
+
+```
+git checkout heroku
+```
+
+Create a Heroku app for this repository (https://devcenter.heroku.com/articles/heroku-command). You will also need a redis addon such as [Redis Cloud](https://addons.heroku.com/rediscloud).
+
+Now, you will need to configure a few environment variables, replace `???` with your S3 credentials:
+
+```
+heroku config:set BUILDPACK_URL=https://github.com/kr/heroku-buildpack-go.git
+heroku config:set AWS_ACCESS_KEY_ID=??? AWS_SECRET_ACCESS_KEY=??? PIXLSERV_S3_BUCKET=???
+```
+
+Find out the URL of your redis instance, if you're using Redis Cloud it is:
+
+```
+heroku config:get REDISCLOUD_URL
+```
+
+Now, use the URL to set up a new environment variable:
+
+```
+heroku config:set PIXLSERV_REDIS_URL=???
+```
+
+Either create a new pixlserv configuration file (more info below) or use the example one for now and then make sure `web: bin/pixlserv run CONFIG_FILE` (where CONFIG_FILE is the path to your file) is the contents of a new file called `Procfile`:
+
+```
+echo web: bin/pixlserv run config/example.yaml > Procfile
+```
+
+Add newly created files to Git (`Procfile` + your new configuration file) and commit.
+
+In case no Heroku dynos are running start one up (if you just created the Heroku app it will be the case):
+
+```
+heroku ps:scale web=1
+```
+
+Push to heroku:
+
+```
+git push heroku master
+```
+
+Once, the application is deployed open the browser with the index page to see if everything is fine:
+
+```
+heroku open
+```
+
+You should now see the text: It works!
+
 
 ## Configuration
 
