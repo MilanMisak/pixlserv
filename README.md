@@ -34,7 +34,7 @@ go build
 
 ## Usage
 
-Start redis (see the Requirements section below for details). Create a directory `local-images` with some JPEG or PNG images in the same directory where you installed pixlserv. Then run:
+Start redis (see the [Requirements](#requirements) section for details). Create a directory `local-images` with some JPEG or PNG images in the same directory where you installed pixlserv. Then run:
 
 ```
 ./pixlserv run config/example.yaml
@@ -50,9 +50,9 @@ Heroku is a popular platform-as-a-service (PaaS) provider so we will have a look
 
 As Heroku uses an [ephemeral filesystem](https://devcenter.heroku.com/articles/dynos#ephemeral-filesystem) which doesn't allow persistent storage of data you will need to use Amazon S3. Please make sure you have a bucket and a user authorised to access the bucket using the instructions in the [Amazon S3](#amazon-s3) section below.
 
-Clone this repository anywhere on your disk. If you do not plan to run the server locally it doesn't need to be in Go's workspace.
+Clone this repository somewhere on your disk. If you do not plan to run the server locally it doesn't need to be in Go's workspace.
 
-Important: switch to the `heroku` branch:
+Navigate to the project directory and switch to the `heroku` branch:
 
 ```
 git checkout heroku
@@ -93,10 +93,10 @@ If there are no Heroku dynos running start one up (if you just created the Herok
 heroku ps:scale web=1
 ```
 
-Push to heroku:
+Push the local `heroku` branch to heroku's git repository `master` branch:
 
 ```
-git push heroku master
+git push heroku heroku:master
 ```
 
 Once, the application is deployed open the browser with the index page to see if everything is fine:
@@ -107,7 +107,15 @@ heroku open
 
 You should now see the text: It works!
 
-You can now start requesting images stored in your S3 bucket. Please note: uploads will not work if you're using the example configuration file without creating an API key first (refer to the [Authentication](#authentication) section).
+You can now start requesting images stored in your S3 bucket.
+
+Please note: uploads will not work if you're using the example configuration file without creating an API key first (refer to the [Authentication](#authentication) section to learn more about authentication). You will want to generate a key:
+
+```
+heroku run bin/pixlserv api-key add
+```
+
+Then restart the server and use the key as part of the URL you POST to (`http://APPNAME.herokuapp.com/KEY/upload`).
 
 
 ## Configuration
