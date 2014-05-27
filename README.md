@@ -40,11 +40,11 @@ go build
 
 ## Usage
 
-Images are requested from the server by accessing a URL of the following format: `http://server/parameters/filename`. Parameters are strings like `transformation_value` connected with commas, e.g. `w_400,h_300`. A full URL could look like this: `http://pixlserv.com/w_400,h_300/logo.jpg`. Once an image is transformed in some way the copy is cached which means it can be accessed quickly next time.
+Images are requested from the server by accessing a URL of the following format: `http://server/image/parameters/filename`. Parameters are strings like `transformation_value` connected with commas, e.g. `w_400,h_300`. A full URL could look like this: `http://pixlserv.com/image/w_400,h_300/logo.jpg`. Once an image is transformed in some way the copy is cached which means it can be accessed quickly next time.
 
 Upload is done by sending an image file as an `image` field of a POST request to `http://server/upload`.
 
-Authorisation can be easily set up to require an API key between `server` and `parameters` (or `upload`) in the example URLs above.
+Authorisation can be easily set up to require an API key between `server` and `image` (or `upload`) in the example URLs above.
 
 ### Using pixlserv locally
 
