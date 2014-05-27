@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"image"
 	"io"
@@ -12,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"regexp"
 	"strings"
 	"syscall"
 	"time"
@@ -27,6 +29,10 @@ import (
 type UploadForm struct {
 	PhotoUpload *multipart.FileHeader `form:"photo"`
 }
+
+var (
+	uploadUrlRe = regexp.MustCompile("/upload$")
+)
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
@@ -88,6 +94,12 @@ func main() {
 				if Config.throttlingRate > 0 {
 					m.Use(throttler(Config.throttlingRate))
 				}
+				m.Use(func(res http.ResponseWriter, req *http.Request) {
+					if uploadUrlRe.MatchString(req.URL.Path) {
+						// The upload handler returns JSON
+						res.Header().Set("Content-Type", "application/json")
+					}
+				})
 				m.Get("/", func() string {
 					return "It works!"
 				})
@@ -261,28 +273,51 @@ func transformationHandler(params martini.Params) (int, string) {
 	return http.StatusOK, buffer.String()
 }
 
+type UploadResponse struct {
+	Status       string `json:"status"`
+	ErrorMessage string `json:"errorMessage"`
+	ImagePath    string `json:"imagePath"`
+}
+
+func uploadResponse(response UploadResponse) string {
+	str, err := json.Marshal(response)
+	if err != nil {
+		log.Printf("Error constructing JSON response for %v", response)
+		return "{\"status\": \"error\", \"errorMessage\": \"server error\"}"
+	}
+	return string(str[:])
+}
+
+func uploadError(errorMessage string) string {
+	return uploadResponse(UploadResponse{"error", errorMessage, ""})
+}
+
+func uploadSuccess(imagePath string) string {
+	return uploadResponse(UploadResponse{"ok", "", imagePath})
+}
+
 func uploadHandler(params martini.Params, uf UploadForm) (int, string) {
 	if !hasPermission(params["apikey"], UploadPermission) {
-		return http.StatusUnauthorized, ""
+		return http.StatusUnauthorized, uploadError("API key invalid or missing")
 	}
 
 	file, err := uf.PhotoUpload.Open()
 	if err != nil {
-		return http.StatusBadRequest, err.Error()
+		return http.StatusBadRequest, uploadError(err.Error())
 	}
 
 	limit := io.LimitReader(file, int64(Config.uploadMaxFileSize+1))
 	data, err := ioutil.ReadAll(limit)
 	if err != nil {
-		return http.StatusBadRequest, err.Error()
+		return http.StatusBadRequest, uploadError(err.Error())
 	}
 	if len(data) > Config.uploadMaxFileSize {
-		return http.StatusBadRequest, "max file size exceeded"
+		return http.StatusBadRequest, uploadError("max file size exceeded")
 	}
 
 	img, format, err := image.Decode(bytes.NewReader(data))
 	if err != nil {
-		return http.StatusBadRequest, err.Error()
+		return http.StatusBadRequest, uploadError(err.Error())
 	}
 
 	defer file.Close()
@@ -315,12 +350,12 @@ func uploadHandler(params martini.Params, uf UploadForm) (int, string) {
 	} else {
 		_, err := saveImage(img, format, baseImagePath)
 		if err != nil {
-			return http.StatusInternalServerError, "Error saving image: " + err.Error()
+			return http.StatusInternalServerError, uploadError("error saving image: " + err.Error())
 		}
 		go eagerlyTransform()
 	}
 
-	return http.StatusOK, ""
+	return http.StatusOK, uploadSuccess(baseImagePath)
 }
 
 func throttler(perMinRate int) http.Handler {
