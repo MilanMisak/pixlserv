@@ -48,7 +48,7 @@ Assuming you copied a file `cat.jpg` to the `local-images` directory you can now
 
 Heroku is a popular platform-as-a-service (PaaS) provider so we will have a look at a more detailed description of how to make pixlserv work on Heroku's infrastructure.
 
-As Heroku uses an [ephemeral filesystem](https://devcenter.heroku.com/articles/dynos#ephemeral-filesystem) which doesn't allow persistent storage of data you will need to use Amazon S3. Please make sure you have a bucket and a user authorised to access the bucket using the instructions in the [Amazon S3](#amazon-S3) section below.
+As Heroku uses an [ephemeral filesystem](https://devcenter.heroku.com/articles/dynos#ephemeral-filesystem) which doesn't allow persistent storage of data you will need to use Amazon S3. Please make sure you have a bucket and a user authorised to access the bucket using the instructions in the [Amazon S3](#amazon-s3) section below.
 
 Clone this repository anywhere on your disk. If you do not plan to run the server locally it doesn't need to be in Go's workspace.
 
