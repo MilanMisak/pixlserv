@@ -7,10 +7,27 @@ Images are requested from the server by accessing a URL of the following format:
 
 ## Installation
 
-[//]: # (TODO: test this out)
+First get pixlserv's source code by either cloning this repository to your Go workspace:
 
 ```
 git clone https://github.com/ReshNesh/pixlserv
+```
+
+or by:
+
+```
+go get github.com/ReshNesh/pixlserv
+```
+
+Navigate to the project directory and fetch dependencies:
+
+```
+go get
+```
+
+Now, build the project:
+
+```
 go build
 ```
 
