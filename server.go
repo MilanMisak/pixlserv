@@ -83,6 +83,9 @@ func main() {
 				if Config.throttlingRate > 0 {
 					m.Use(throttler(Config.throttlingRate))
 				}
+				m.Get("/", func() string {
+					return "It works!"
+				})
 				m.Get("/((?P<apikey>[A-Z0-9]+)/)?image/:parameters/**", transformationHandler)
 				m.Post("/((?P<apikey>[A-Z0-9]+)/)?upload", binding.MultipartForm(UploadForm{}), uploadHandler)
 				go m.Run()
