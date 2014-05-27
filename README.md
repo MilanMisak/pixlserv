@@ -48,17 +48,17 @@ Assuming you copied a file `cat.jpg` to the `local-images` directory you can now
 
 Heroku is a popular platform-as-a-service (PaaS) provider so we will have a look at a more detailed description of how to make pixlserv work on Heroku's infrastructure.
 
-As Heroku uses an [ephemeral filesystem](https://devcenter.heroku.com/articles/dynos#ephemeral-filesystem) which doesn't allow persistent storage of data you will need to use Amazon S3. Please make sure you have a bucket and a user authorised to access the bucket using the instructions in the [Amazon S3](Amazon S3) section below.
+As Heroku uses an [ephemeral filesystem](https://devcenter.heroku.com/articles/dynos#ephemeral-filesystem) which doesn't allow persistent storage of data you will need to use Amazon S3. Please make sure you have a bucket and a user authorised to access the bucket using the instructions in the [Amazon S3](#Amazon S3) section below.
 
 Clone this repository anywhere on your disk. If you do not plan to run the server locally it doesn't need to be in Go's workspace.
 
-Important: switch to the `heroku branch`:
+Important: switch to the `heroku` branch:
 
 ```
 git checkout heroku
 ```
 
-Create a Heroku app for this repository (https://devcenter.heroku.com/articles/heroku-command). You will also need a redis addon such as [Redis Cloud](https://addons.heroku.com/rediscloud).
+[Create a Heroku app](https://devcenter.heroku.com/articles/heroku-command) for the new repository. You will also need a redis add-on such as [Redis Cloud](https://addons.heroku.com/rediscloud).
 
 Now, you will need to configure a few environment variables, replace `???` with your S3 credentials:
 
@@ -79,7 +79,7 @@ Now, use the URL to set up a new environment variable:
 heroku config:set PIXLSERV_REDIS_URL=???
 ```
 
-Either create a new pixlserv configuration file (more info below) or use the example one for now and then make sure `web: bin/pixlserv run CONFIG_FILE` (where CONFIG_FILE is the path to your file) is the contents of a new file called `Procfile`:
+Either create a new pixlserv configuration file (more info below) or use the example one for now and then make sure `web: bin/pixlserv run CONFIG_FILE` (where `CONFIG_FILE` is the path to your file) is the contents of a new file called `Procfile`:
 
 ```
 echo web: bin/pixlserv run config/example.yaml > Procfile
@@ -87,7 +87,7 @@ echo web: bin/pixlserv run config/example.yaml > Procfile
 
 Add newly created files to Git (`Procfile` + your new configuration file) and commit.
 
-In case no Heroku dynos are running start one up (if you just created the Heroku app it will be the case):
+If there are no Heroku dynos running start one up (if you just created the Heroku app it will be the case):
 
 ```
 heroku ps:scale web=1
@@ -106,6 +106,8 @@ heroku open
 ```
 
 You should now see the text: It works!
+
+You can now start requesting images stored in your S3 bucket. Please note: uploads will not work if you're using the example configuration file without creating an API key first (refer to the [Authentication](#Authentication) section).
 
 
 ## Configuration
