@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -25,6 +26,10 @@ import (
 // UploadForm is a form structure to use when an image is POSTed to the server
 type UploadForm struct {
 	PhotoUpload *multipart.FileHeader `form:"photo"`
+}
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
 }
 
 func main() {
@@ -283,7 +288,8 @@ func uploadHandler(params martini.Params, uf UploadForm) (int, string) {
 	defer file.Close()
 
 	// Not a big fan of .jpeg file extensions
-	baseImagePath := fmt.Sprintf("%d.%s", time.Now().Unix(), strings.Replace(format, "jpeg", "jpg", 1))
+	randomInt := rand.Intn(1000)
+	baseImagePath := fmt.Sprintf("%d-%d.%s", time.Now().Unix(), randomInt, strings.Replace(format, "jpeg", "jpg", 1))
 	log.Printf("Uploading %s", baseImagePath)
 
 	// Eager transformations
