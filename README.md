@@ -44,7 +44,7 @@ This will run the server using a simple configuration defined in [config/example
 
 Assuming you copied a file `cat.jpg` to the `local-images` directory you can now access [http://localhost:3000/image/t_square/cat.jpg](http://localhost:3000/image/t_square/cat.jpg) using your browser.
 
-### Usage on Heroku
+### Using pixlserv with Heroku
 
 Heroku is a popular platform-as-a-service (PaaS) provider so we will have a look at a more detailed description of how to make pixlserv work on Heroku's infrastructure.
 
@@ -213,3 +213,10 @@ API keys can be added, removed and modified by running `./pixlserv api-key COMMA
 ## Requirements
 
 A running [redis](http://redis.io/) instance is required for the server to be able to maintain a cache of images. Check the redis website to find out how to download and install redis. If you run redis on a different port than the default 6379 please make sure to set up a `PIXLSERV_REDIS_PORT` environment variable with the port you are using.
+
+
+## Future development
+
+* a Javascript library for easier uploads from the browser
+* Django, Rails support for generating image URLs on the server
+* a sample application
