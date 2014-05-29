@@ -1,6 +1,6 @@
 # Pixlserv
 
-A Go server for on-the-fly processing and serving images. A self-hosted image management solution for websites and mobile apps.
+A Go server for on-the-fly processing and serving of images. A self-hosted image management solution for websites and mobile apps.
 
 1. Get the code and install the server
 
