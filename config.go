@@ -119,45 +119,53 @@ func configInit(configFilePath string) error {
 	}
 
 	transformations, ok := m["transformations"].([]interface{})
-	if ok {
-		for _, transformationInterface := range transformations {
-			transformation, ok := transformationInterface.(map[interface{}]interface{})
-			if ok {
-				parametersStr, ok := transformation["parameters"].(string)
-				if ok {
-					params, err := parseParameters(parametersStr)
-					if err != nil {
-						return fmt.Errorf("invalid transformation parameters: %s (%s)", parametersStr, err)
-					}
-					name, ok := transformation["name"].(string)
-					if ok {
-						if !isValidTransformationName(name) {
-							return fmt.Errorf("invalid transformation name: %s", name)
-						}
+	if !ok {
+		return nil
+	}
 
-						t := Transformation{&params, nil}
+	for _, transformationInterface := range transformations {
+		transformation, ok := transformationInterface.(map[interface{}]interface{})
+		if !ok {
+			continue
+		}
 
-						watermarkMap, ok := transformation["watermark"].(map[interface{}]interface{})
-						if ok {
-							imagePath, ok := watermarkMap["source"].(string)
-							if !ok {
-								return fmt.Errorf("a watermark needs to have a source specified")
-							}
-							// x and y will default to 0 if not found in config
-							x := watermarkMap["x-pos"].(int)
-							y := watermarkMap["y-pos"].(int)
-							t.watermark = &Watermark{imagePath, x, y}
-						}
+		parametersStr, ok := transformation["parameters"].(string)
+		if !ok {
+			continue
+		}
 
-						Config.transformations[name] = t
+		params, err := parseParameters(parametersStr)
+		if err != nil {
+			return fmt.Errorf("invalid transformation parameters: %s (%s)", parametersStr, err)
+		}
 
-						eager, ok := transformation["eager"].(bool)
-						if ok && eager {
-							Config.eagerTransformations = append(Config.eagerTransformations, t)
-						}
-					}
-				}
+		name, ok := transformation["name"].(string)
+		if !ok {
+			continue
+		}
+		if !isValidTransformationName(name) {
+			return fmt.Errorf("invalid transformation name: %s", name)
+		}
+
+		t := Transformation{&params, nil}
+
+		watermarkMap, ok := transformation["watermark"].(map[interface{}]interface{})
+		if ok {
+			imagePath, ok := watermarkMap["source"].(string)
+			if !ok {
+				return fmt.Errorf("a watermark needs to have a source specified")
 			}
+			// x and y will default to 0 if not found in config
+			x := watermarkMap["x-pos"].(int)
+			y := watermarkMap["y-pos"].(int)
+			t.watermark = &Watermark{imagePath, x, y}
+		}
+
+		Config.transformations[name] = t
+
+		eager, ok := transformation["eager"].(bool)
+		if ok && eager {
+			Config.eagerTransformations = append(Config.eagerTransformations, t)
 		}
 	}
 
