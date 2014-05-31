@@ -223,7 +223,7 @@ func transformationHandler(params martini.Params) (int, string) {
 		if err != nil {
 			return http.StatusBadRequest, err.Error()
 		}
-		transformation = Transformation{&parameters, nil}
+		transformation = Transformation{&parameters, nil, make([]*Text, 0)}
 	} else {
 		return http.StatusBadRequest, "Custom transformations not allowed"
 	}

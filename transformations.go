@@ -6,8 +6,10 @@ import (
 	"image"
 	"image/color"
 	"image/draw"
+	"io/ioutil"
 	"log"
 
+	"code.google.com/p/freetype-go/freetype"
 	"github.com/nfnt/resize"
 )
 
@@ -15,12 +17,20 @@ import (
 type Transformation struct {
 	params    *Params
 	watermark *Watermark
+	texts     []*Text
 }
 
-// Watermark specifies a watermark to be applied to an image during a transformation
+// Watermark specifies a watermark to be applied to an image
 type Watermark struct {
 	imagePath string
 	x, y      int
+}
+
+// Text specifies a text overlay to be applied to an image
+type Text struct {
+	content, fontFilePath string
+	x, y, size            int
+	color                 color.Color
 }
 
 func transformCropAndResize(img image.Image, transformation *Transformation) (imgNew image.Image) {
@@ -153,6 +163,44 @@ func transformCropAndResize(img image.Image, transformation *Transformation) (im
 		draw.Draw(finalImage, bounds, imgNew, bounds.Min, draw.Src)
 		draw.Draw(finalImage, watermarkRect, watermark, watermarkBounds.Min, draw.Over)
 		imgNew = finalImage.SubImage(bounds)
+	}
+
+	if transformation.texts != nil {
+		for _, text := range transformation.texts {
+			fontBytes, err := ioutil.ReadFile(text.fontFilePath)
+			if err != nil {
+				log.Println("Error adding text:", err)
+				return
+			}
+			font, err := freetype.ParseFont(fontBytes)
+			if err != nil {
+				log.Println("Error adding text:", err)
+				return
+			}
+
+			rgba := image.NewRGBA(imgNew.Bounds())
+			draw.Draw(rgba, rgba.Bounds(), imgNew, image.ZP, draw.Src)
+
+			dpi := float64(72 * scale)
+			size := float64(text.size * scale)
+
+			c := freetype.NewContext()
+			c.SetDPI(dpi)
+			c.SetFont(font)
+			c.SetFontSize(size)
+			c.SetClip(rgba.Bounds())
+			c.SetDst(rgba)
+			c.SetSrc(image.NewUniform(text.color))
+
+			pt := freetype.Pt(text.x*scale, text.y*scale+int(c.PointToFix32(size)>>8))
+			_, err = c.DrawString(text.content, pt)
+			if err != nil {
+				log.Println("Error adding text:", err)
+				return
+			}
+
+			imgNew = rgba
+		}
 	}
 
 	return
