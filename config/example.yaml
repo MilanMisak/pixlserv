@@ -31,6 +31,21 @@ transformations:
     - name:       square
       parameters: w_200,h_200
       eager:      Yes # Run on every upload
+    - name:       watermarked
+      parameters: w_600
+      watermark:
+          source: watermark.png
+          x-pos:  -50
+          y-pos:  -5
+    - name:       withtext
+      parameters: w_602
+      text:
+          - content: This is text
+            x-pos:   30
+            y-pos:   20
+            color:   "#FFFFFF"
+            font:    fonts/DejaVuSans.ttf
+            size:    12
 
 # Cache settings
 cache:

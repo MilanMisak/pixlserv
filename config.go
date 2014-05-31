@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"regexp"
 
+	"github.com/lucasb-eyer/go-colorful"
 	"gopkg.in/yaml.v1"
 )
 
@@ -27,6 +28,7 @@ const (
 	defaultAuthorisedUpload           = false
 	defaultLocalPath                  = "local-images"
 	defaultCacheStrategy              = LRU
+	defaultFont                       = "fonts/DejaVuSans.ttf"
 )
 
 var (
@@ -147,7 +149,7 @@ func configInit(configFilePath string) error {
 			return fmt.Errorf("invalid transformation name: %s", name)
 		}
 
-		t := Transformation{&params, nil}
+		t := Transformation{&params, nil, make([]*Text, 0)}
 
 		watermarkMap, ok := transformation["watermark"].(map[interface{}]interface{})
 		if ok {
@@ -159,6 +161,48 @@ func configInit(configFilePath string) error {
 			x := watermarkMap["x-pos"].(int)
 			y := watermarkMap["y-pos"].(int)
 			t.watermark = &Watermark{imagePath, x, y}
+		}
+
+		texts, ok := transformation["text"].([]interface{})
+		if ok {
+
+			for _, textMap := range texts {
+				text, ok := textMap.(map[interface{}]interface{})
+				if !ok {
+					continue
+				}
+
+				content, ok := text["content"].(string)
+
+				// x and y will default to 0 if not found in config
+				x := text["x-pos"].(int)
+				y := text["y-pos"].(int)
+
+				colorStr, ok := text["color"].(string)
+				if !ok {
+					return fmt.Errorf("text needs to have a color specified")
+				}
+				color, err := colorful.Hex(colorStr)
+				if err != nil {
+					return err
+				}
+
+				font, ok := text["font"].(string)
+				if !ok {
+					font = defaultFont
+				}
+				//TODO - check that the file exists
+
+				size, ok := text["size"].(int)
+				if !ok {
+					return fmt.Errorf("%v is not a valid size", text["size"])
+				}
+				if size < 1 {
+					return fmt.Errorf("size needs to be at least 1")
+				}
+
+				t.texts = append(t.texts, &Text{content, font, x, y, size, color})
+			}
 		}
 
 		Config.transformations[name] = t
