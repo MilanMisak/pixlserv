@@ -43,7 +43,7 @@ func (t *Text) GetFontMetrics(scale int) FontMetrics {
 	// Adapted from: https://code.google.com/p/plotinum/
 
 	// Converts truetype.FUnit to float64
-	fUnit2Float64 := float64(t.size*scale) / float64(float64(t.font.FUnitsPerEm()))
+	fUnit2Float64 := float64(t.size) / float64(t.font.FUnitsPerEm())
 
 	width := 0
 	prev, hasPrev := truetype.Index(0), false
@@ -55,12 +55,12 @@ func (t *Text) GetFontMetrics(scale int) FontMetrics {
 		width += int(t.font.HMetric(t.font.FUnitsPerEm(), index).AdvanceWidth)
 		prev, hasPrev = index, true
 	}
-	widthFloat := float64(width) * fUnit2Float64
+	widthFloat := float64(width) * fUnit2Float64 * float64(scale)
 
 	bounds := t.font.Bounds(t.font.FUnitsPerEm())
-	height := float64(bounds.YMax-bounds.YMin) * fUnit2Float64
-	ascent := float64(bounds.YMax) * fUnit2Float64
-	descent := float64(bounds.YMin) * fUnit2Float64
+	height := float64(bounds.YMax-bounds.YMin) * fUnit2Float64 * float64(scale)
+	ascent := float64(bounds.YMax) * fUnit2Float64 * float64(scale)
+	descent := float64(bounds.YMin) * fUnit2Float64 * float64(scale)
 
 	return FontMetrics{widthFloat, height, ascent, descent}
 }
@@ -202,7 +202,7 @@ func transformCropAndResize(img image.Image, transformation *Transformation) (im
 		rgba := image.NewRGBA(bounds)
 		draw.Draw(rgba, bounds, imgNew, image.ZP, draw.Src)
 
-		dpi := float64(72 * scale)
+		dpi := float64(72) // Multiply this by scale for a baaad time
 
 		c := freetype.NewContext()
 		c.SetDPI(dpi)
