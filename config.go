@@ -6,6 +6,8 @@ import (
 	"os"
 	"regexp"
 
+	"code.google.com/p/freetype-go/freetype"
+
 	"github.com/ReshNesh/go-colorful"
 	"gopkg.in/yaml.v1"
 )
@@ -193,7 +195,15 @@ func configInit(configFilePath string) error {
 					fontFilePath = defaultFontPath
 				}
 				if _, err := os.Stat(fontFilePath); os.IsNotExist(err) {
-					return fmt.Errorf("font does not exist: %s", fontFilePath)
+					return fmt.Errorf("font does not exist:", fontFilePath)
+				}
+				fontBytes, err := ioutil.ReadFile(fontFilePath)
+				if err != nil {
+					return fmt.Errorf("loading font failed:", err)
+				}
+				font, err := freetype.ParseFont(fontBytes)
+				if err != nil {
+					return fmt.Errorf("loading font failed:", err)
 				}
 
 				size, ok := text["size"].(int)
@@ -204,7 +214,7 @@ func configInit(configFilePath string) error {
 					return fmt.Errorf("size needs to be at least 1")
 				}
 
-				t.texts = append(t.texts, &Text{content, fontFilePath, x, y, size, color})
+				t.texts = append(t.texts, &Text{content, x, y, size, font, color})
 			}
 		}
 
