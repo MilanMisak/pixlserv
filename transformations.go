@@ -6,10 +6,10 @@ import (
 	"image"
 	"image/color"
 	"image/draw"
-	"io/ioutil"
 	"log"
 
 	"code.google.com/p/freetype-go/freetype"
+	"code.google.com/p/freetype-go/freetype/truetype"
 	"github.com/nfnt/resize"
 )
 
@@ -28,9 +28,41 @@ type Watermark struct {
 
 // Text specifies a text overlay to be applied to an image
 type Text struct {
-	content, fontFilePath string
-	x, y, size            int
-	color                 color.Color
+	content    string
+	x, y, size int
+	font       *truetype.Font
+	color      color.Color
+}
+
+// FontMetrics defines font metrics for a Text struct as rounded up integers
+type FontMetrics struct {
+	width, height, ascent, descent float64
+}
+
+func (t *Text) GetFontMetrics(scale int) FontMetrics {
+	// Adapted from: https://code.google.com/p/plotinum/
+
+	// Converts truetype.FUnit to float64
+	fUnit2Float64 := float64(t.size) / float64(t.font.FUnitsPerEm())
+
+	width := 0
+	prev, hasPrev := truetype.Index(0), false
+	for _, rune := range t.content {
+		index := t.font.Index(rune)
+		if hasPrev {
+			width += int(t.font.Kerning(t.font.FUnitsPerEm(), prev, index))
+		}
+		width += int(t.font.HMetric(t.font.FUnitsPerEm(), index).AdvanceWidth)
+		prev, hasPrev = index, true
+	}
+	widthFloat := float64(width) * fUnit2Float64 * float64(scale)
+
+	bounds := t.font.Bounds(t.font.FUnitsPerEm())
+	height := float64(bounds.YMax-bounds.YMin) * fUnit2Float64 * float64(scale)
+	ascent := float64(bounds.YMax) * fUnit2Float64 * float64(scale)
+	descent := float64(bounds.YMin) * fUnit2Float64 * float64(scale)
+
+	return FontMetrics{widthFloat, height, ascent, descent}
 }
 
 func transformCropAndResize(img image.Image, transformation *Transformation) (imgNew image.Image) {
@@ -166,41 +198,42 @@ func transformCropAndResize(img image.Image, transformation *Transformation) (im
 	}
 
 	if transformation.texts != nil {
+		bounds := imgNew.Bounds()
+		rgba := image.NewRGBA(bounds)
+		draw.Draw(rgba, bounds, imgNew, image.ZP, draw.Src)
+
+		dpi := float64(72) // Multiply this by scale for a baaad time
+
+		c := freetype.NewContext()
+		c.SetDPI(dpi)
+		c.SetClip(rgba.Bounds())
+		c.SetDst(rgba)
+
 		for _, text := range transformation.texts {
-			fontBytes, err := ioutil.ReadFile(text.fontFilePath)
-			if err != nil {
-				log.Println("Error adding text:", err)
-				return
-			}
-			font, err := freetype.ParseFont(fontBytes)
-			if err != nil {
-				log.Println("Error adding text:", err)
-				return
-			}
-
-			rgba := image.NewRGBA(imgNew.Bounds())
-			draw.Draw(rgba, rgba.Bounds(), imgNew, image.ZP, draw.Src)
-
-			dpi := float64(72 * scale)
 			size := float64(text.size * scale)
 
-			c := freetype.NewContext()
-			c.SetDPI(dpi)
-			c.SetFont(font)
-			c.SetFontSize(size)
-			c.SetClip(rgba.Bounds())
-			c.SetDst(rgba)
 			c.SetSrc(image.NewUniform(text.color))
+			c.SetFont(text.font)
+			c.SetFontSize(size)
 
-			pt := freetype.Pt(text.x*scale, text.y*scale+int(c.PointToFix32(size)>>8))
-			_, err = c.DrawString(text.content, pt)
+			fontMetrics := text.GetFontMetrics(scale)
+			x := text.x * scale
+			y := text.y*scale + int(c.PointToFix32(fontMetrics.ascent)>>8)
+			if x < 0 {
+				x += bounds.Dx() - int(c.PointToFix32(fontMetrics.width)>>8)
+			}
+			if y < 0 {
+				y += bounds.Dy() - int(c.PointToFix32(fontMetrics.height)>>8)
+			}
+
+			_, err := c.DrawString(text.content, freetype.Pt(x, y))
 			if err != nil {
 				log.Println("Error adding text:", err)
 				return
 			}
-
-			imgNew = rgba
 		}
+
+		imgNew = rgba
 	}
 
 	return

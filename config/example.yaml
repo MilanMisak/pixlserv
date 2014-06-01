@@ -38,7 +38,7 @@ transformations:
           x-pos:  -50
           y-pos:  -5
     - name:       withtext
-      parameters: w_620
+      parameters: w_600
       text:
           - content: This is text
             x-pos:   30
