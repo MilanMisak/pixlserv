@@ -38,12 +38,12 @@ transformations:
           x-pos:  -50
           y-pos:  -5
     - name:       withtext
-      parameters: w_602
+      parameters: w_620
       text:
           - content: This is text
             x-pos:   30
             y-pos:   20
-            color:   "#FFFFFF"
+            color:   "#fff"
             font:    fonts/DejaVuSans.ttf
             size:    12
 
