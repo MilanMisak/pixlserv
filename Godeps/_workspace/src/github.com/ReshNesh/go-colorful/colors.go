@@ -165,7 +165,7 @@ func (col Color) Hex() string {
 func Hex(scol string) (Color, error) {
     format := "#%02x%02x%02x"
     if len(scol) == 4 {
-        format = "#%x%x%x"
+        scol = "#" + string([]byte{scol[1], scol[1], scol[2], scol[2], scol[3], scol[3]})
     }
 
     var r, g, b uint8

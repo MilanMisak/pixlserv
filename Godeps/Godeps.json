@@ -12,6 +12,10 @@
 			"Rev": "65b17baf7dd2924b3085f66e4f5677e21cf76c06"
 		},
 		{
+			"ImportPath": "github.com/ReshNesh/go-colorful",
+			"Rev": "5f4b66bc2b755460aae8a01c47af09dcf204aca8"
+		},
+		{
 			"ImportPath": "github.com/codegangsta/cli",
 			"Comment": "1.0.0-65-g820deef",
 			"Rev": "820deefc9031d101f085ef773425fc6ca7a5363e"
@@ -32,10 +36,6 @@
 		{
 			"ImportPath": "github.com/golang/groupcache/lru",
 			"Rev": "d781998583680cda80cf61e0b37dd0cd8da2eb52"
-		},
-		{
-			"ImportPath": "github.com/lucasb-eyer/go-colorful",
-			"Rev": "b97dece1bb8f8a7738c0c706cfc0130185e25a95"
 		},
 		{
 			"ImportPath": "github.com/martini-contrib/binding",
