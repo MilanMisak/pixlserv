@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"regexp"
 
-	"github.com/lucasb-eyer/go-colorful"
+	"github.com/ReshNesh/go-colorful"
 	"gopkg.in/yaml.v1"
 )
 
