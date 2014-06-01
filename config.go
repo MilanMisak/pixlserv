@@ -128,8 +128,8 @@ func configInit(configFilePath string) error {
 		return nil
 	}
 
-	for _, transformationInterface := range transformations {
-		transformation, ok := transformationInterface.(map[interface{}]interface{})
+	for _, transformationMap := range transformations {
+		transformation, ok := transformationMap.(map[interface{}]interface{})
 		if !ok {
 			continue
 		}
