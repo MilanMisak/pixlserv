@@ -198,21 +198,23 @@ func transformCropAndResize(img image.Image, transformation *Transformation) (im
 	}
 
 	if transformation.texts != nil {
-		for _, text := range transformation.texts {
-			bounds := imgNew.Bounds()
-			rgba := image.NewRGBA(bounds)
-			draw.Draw(rgba, bounds, imgNew, image.ZP, draw.Src)
+		bounds := imgNew.Bounds()
+		rgba := image.NewRGBA(bounds)
+		draw.Draw(rgba, bounds, imgNew, image.ZP, draw.Src)
 
-			dpi := float64(72 * scale)
+		dpi := float64(72 * scale)
+
+		c := freetype.NewContext()
+		c.SetDPI(dpi)
+		c.SetClip(rgba.Bounds())
+		c.SetDst(rgba)
+
+		for _, text := range transformation.texts {
 			size := float64(text.size * scale)
 
-			c := freetype.NewContext()
-			c.SetDPI(dpi)
+			c.SetSrc(image.NewUniform(text.color))
 			c.SetFont(text.font)
 			c.SetFontSize(size)
-			c.SetClip(rgba.Bounds())
-			c.SetDst(rgba)
-			c.SetSrc(image.NewUniform(text.color))
 
 			fontMetrics := text.GetFontMetrics(scale)
 			x := text.x * scale
@@ -229,9 +231,9 @@ func transformCropAndResize(img image.Image, transformation *Transformation) (im
 				log.Println("Error adding text:", err)
 				return
 			}
-
-			imgNew = rgba
 		}
+
+		imgNew = rgba
 	}
 
 	return
