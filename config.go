@@ -160,10 +160,23 @@ func configInit(configFilePath string) error {
 			if !ok {
 				return fmt.Errorf("a watermark needs to have a source specified")
 			}
+
+			gravity, ok := watermarkMap["gravity"].(string)
+			if !ok || !isValidGravity(gravity) {
+				return fmt.Errorf("missing or invalid gravity: %s", gravity)
+			}
+
 			// x and y will default to 0 if not found in config
 			x := watermarkMap["x-pos"].(int)
+			if x < 0 {
+				return fmt.Errorf("x-pos must be at least 0")
+			}
 			y := watermarkMap["y-pos"].(int)
-			t.watermark = &Watermark{imagePath, x, y}
+			if y < 0 {
+				return fmt.Errorf("y-pos must be at least 0")
+			}
+
+			t.watermark = &Watermark{imagePath, gravity, x, y}
 		}
 
 		texts, ok := transformation["text"].([]interface{})

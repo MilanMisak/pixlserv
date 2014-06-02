@@ -22,8 +22,8 @@ type Transformation struct {
 
 // Watermark specifies a watermark to be applied to an image
 type Watermark struct {
-	imagePath string
-	x, y      int
+	imagePath, gravity string
+	x, y               int
 }
 
 // Text specifies a text overlay to be applied to an image
@@ -182,14 +182,11 @@ func transformCropAndResize(img image.Image, transformation *Transformation) (im
 		watermark := image.NewRGBA(watermarkBounds)
 		draw.Draw(watermark, watermarkBounds, watermarkSrcScaled, watermarkBounds.Min, draw.Src)
 
-		wX := w.x * scale
-		wY := w.y * scale
-		if wX < 0 {
-			wX += bounds.Dx() - watermarkBounds.Dx()
-		}
-		if wY < 0 {
-			wY += bounds.Dy() - watermarkBounds.Dy()
-		}
+		pt := calculateTopLeftPointFromGravity(w.gravity, watermarkBounds.Dx(), watermarkBounds.Dy(), bounds.Dx(), bounds.Dy())
+		pt = pt.Add(getTranslation(w.gravity, w.x, w.y))
+		wX := pt.X
+		wY := pt.Y
+
 		watermarkRect := image.Rect(wX, wY, watermarkBounds.Dx()+wX, watermarkBounds.Dy()+wY)
 		finalImage := image.NewRGBA(bounds)
 		draw.Draw(finalImage, bounds, imgNew, bounds.Min, draw.Src)
@@ -239,7 +236,7 @@ func transformCropAndResize(img image.Image, transformation *Transformation) (im
 	return
 }
 
-func calculateTopLeftPointFromGravity(gravity string, width, height int, imgWidth, imgHeight int) image.Point {
+func calculateTopLeftPointFromGravity(gravity string, width, height, imgWidth, imgHeight int) image.Point {
 	// Assuming width <= imgWidth && height <= imgHeight
 	switch gravity {
 	case GravityNorth:
@@ -260,6 +257,32 @@ func calculateTopLeftPointFromGravity(gravity string, width, height int, imgWidt
 		return image.Point{0, 0}
 	case GravityCenter:
 		return image.Point{(imgWidth - width) / 2, (imgHeight - height) / 2}
+	}
+	panic("This point should not be reached")
+}
+
+// getTranslation returns a point specifying a translation by a given
+// horizontal and vertical offset according to gravity
+func getTranslation(gravity string, h, v int) image.Point {
+	switch gravity {
+	case GravityNorth:
+		return image.Point{0, v}
+	case GravityNorthEast:
+		return image.Point{-h, v}
+	case GravityEast:
+		return image.Point{-h, 0}
+	case GravitySouthEast:
+		return image.Point{-h, -v}
+	case GravitySouth:
+		return image.Point{0, -v}
+	case GravitySouthWest:
+		return image.Point{h, -v}
+	case GravityWest:
+		return image.Point{h, 0}
+	case GravityNorthWest:
+		return image.Point{h, v}
+	case GravityCenter:
+		return image.Point{0, 0}
 	}
 	panic("This point should not be reached")
 }

@@ -151,3 +151,11 @@ func isValidGravity(str string) bool {
 func isValidFilter(str string) bool {
 	return str == FilterGrayScale
 }
+
+func isEasternGravity(str string) bool {
+	return str == GravityNorthEast || str == GravityEast || str == GravitySouthEast
+}
+
+func isSouthernGravity(str string) bool {
+	return str == GravitySouthWest || str == GravitySouth || str == GravitySouthEast
+}
