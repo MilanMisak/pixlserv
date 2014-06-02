@@ -42,6 +42,7 @@ transformations:
       parameters: w_600
       text:
           - content: This is text
+            gravity: ne
             x-pos:   30
             y-pos:   20
             color:   "#fff"

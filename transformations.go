@@ -28,10 +28,10 @@ type Watermark struct {
 
 // Text specifies a text overlay to be applied to an image
 type Text struct {
-	content    string
-	x, y, size int
-	font       *truetype.Font
-	color      color.Color
+	content, gravity string
+	x, y, size       int
+	font             *truetype.Font
+	color            color.Color
 }
 
 // FontMetrics defines font metrics for a Text struct as rounded up integers
@@ -183,7 +183,7 @@ func transformCropAndResize(img image.Image, transformation *Transformation) (im
 		draw.Draw(watermark, watermarkBounds, watermarkSrcScaled, watermarkBounds.Min, draw.Src)
 
 		pt := calculateTopLeftPointFromGravity(w.gravity, watermarkBounds.Dx(), watermarkBounds.Dy(), bounds.Dx(), bounds.Dy())
-		pt = pt.Add(getTranslation(w.gravity, w.x, w.y))
+		pt = pt.Add(getTranslation(w.gravity, w.x*scale, w.y*scale))
 		wX := pt.X
 		wY := pt.Y
 
@@ -214,14 +214,13 @@ func transformCropAndResize(img image.Image, transformation *Transformation) (im
 			c.SetFontSize(size)
 
 			fontMetrics := text.GetFontMetrics(scale)
-			x := text.x * scale
-			y := text.y*scale + int(c.PointToFix32(fontMetrics.ascent)>>8)
-			if x < 0 {
-				x += bounds.Dx() - int(c.PointToFix32(fontMetrics.width)>>8)
-			}
-			if y < 0 {
-				y += bounds.Dy() - int(c.PointToFix32(fontMetrics.height)>>8)
-			}
+			width := int(c.PointToFix32(fontMetrics.width) >> 8)
+			height := int(c.PointToFix32(fontMetrics.height) >> 8)
+
+			pt := calculateTopLeftPointFromGravity(text.gravity, width, height, bounds.Dx(), bounds.Dy())
+			pt = pt.Add(getTranslation(text.gravity, text.x*scale, text.y*scale))
+			x := pt.X
+			y := pt.Y + int(c.PointToFix32(fontMetrics.ascent)>>8)
 
 			_, err := c.DrawString(text.content, freetype.Pt(x, y))
 			if err != nil {
