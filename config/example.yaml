@@ -35,12 +35,14 @@ transformations:
       parameters: w_600
       watermark:
           source: watermark.png
-          x-pos:  -50
-          y-pos:  -5
+          gravity: se
+          x-pos:  50
+          y-pos:  5
     - name:       withtext
       parameters: w_600
       text:
           - content: This is text
+            gravity: ne
             x-pos:   30
             y-pos:   20
             color:   "#fff"

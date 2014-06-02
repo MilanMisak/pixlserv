@@ -160,10 +160,23 @@ func configInit(configFilePath string) error {
 			if !ok {
 				return fmt.Errorf("a watermark needs to have a source specified")
 			}
+
+			gravity, ok := watermarkMap["gravity"].(string)
+			if !ok || !isValidGravity(gravity) {
+				return fmt.Errorf("missing or invalid gravity: %s", gravity)
+			}
+
 			// x and y will default to 0 if not found in config
-			x := watermarkMap["x-pos"].(int)
-			y := watermarkMap["y-pos"].(int)
-			t.watermark = &Watermark{imagePath, x, y}
+			x, ok := watermarkMap["x-pos"].(int)
+			if x < 0 {
+				return fmt.Errorf("x-pos must be at least 0")
+			}
+			y, ok := watermarkMap["y-pos"].(int)
+			if y < 0 {
+				return fmt.Errorf("y-pos must be at least 0")
+			}
+
+			t.watermark = &Watermark{imagePath, gravity, x, y}
 		}
 
 		texts, ok := transformation["text"].([]interface{})
@@ -177,9 +190,20 @@ func configInit(configFilePath string) error {
 
 				content, ok := text["content"].(string)
 
+				gravity, ok := text["gravity"].(string)
+				if !ok || !isValidGravity(gravity) {
+					return fmt.Errorf("missing or invalid gravity: %s", gravity)
+				}
+
 				// x and y will default to 0 if not found in config
-				x := text["x-pos"].(int)
-				y := text["y-pos"].(int)
+				x, ok := text["x-pos"].(int)
+				if x < 0 {
+					return fmt.Errorf("x-pos must be at least 0")
+				}
+				y, ok := text["y-pos"].(int)
+				if y < 0 {
+					return fmt.Errorf("y-pos must be at least 0")
+				}
 
 				colorStr, ok := text["color"].(string)
 				if !ok {
@@ -214,7 +238,7 @@ func configInit(configFilePath string) error {
 					return fmt.Errorf("size needs to be at least 1")
 				}
 
-				t.texts = append(t.texts, &Text{content, x, y, size, font, color})
+				t.texts = append(t.texts, &Text{content, gravity, x, y, size, font, color})
 			}
 		}
 

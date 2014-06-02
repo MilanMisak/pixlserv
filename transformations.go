@@ -22,16 +22,16 @@ type Transformation struct {
 
 // Watermark specifies a watermark to be applied to an image
 type Watermark struct {
-	imagePath string
-	x, y      int
+	imagePath, gravity string
+	x, y               int
 }
 
 // Text specifies a text overlay to be applied to an image
 type Text struct {
-	content    string
-	x, y, size int
-	font       *truetype.Font
-	color      color.Color
+	content, gravity string
+	x, y, size       int
+	font             *truetype.Font
+	color            color.Color
 }
 
 // FontMetrics defines font metrics for a Text struct as rounded up integers
@@ -182,14 +182,11 @@ func transformCropAndResize(img image.Image, transformation *Transformation) (im
 		watermark := image.NewRGBA(watermarkBounds)
 		draw.Draw(watermark, watermarkBounds, watermarkSrcScaled, watermarkBounds.Min, draw.Src)
 
-		wX := w.x * scale
-		wY := w.y * scale
-		if wX < 0 {
-			wX += bounds.Dx() - watermarkBounds.Dx()
-		}
-		if wY < 0 {
-			wY += bounds.Dy() - watermarkBounds.Dy()
-		}
+		pt := calculateTopLeftPointFromGravity(w.gravity, watermarkBounds.Dx(), watermarkBounds.Dy(), bounds.Dx(), bounds.Dy())
+		pt = pt.Add(getTranslation(w.gravity, w.x*scale, w.y*scale))
+		wX := pt.X
+		wY := pt.Y
+
 		watermarkRect := image.Rect(wX, wY, watermarkBounds.Dx()+wX, watermarkBounds.Dy()+wY)
 		finalImage := image.NewRGBA(bounds)
 		draw.Draw(finalImage, bounds, imgNew, bounds.Min, draw.Src)
@@ -217,14 +214,13 @@ func transformCropAndResize(img image.Image, transformation *Transformation) (im
 			c.SetFontSize(size)
 
 			fontMetrics := text.GetFontMetrics(scale)
-			x := text.x * scale
-			y := text.y*scale + int(c.PointToFix32(fontMetrics.ascent)>>8)
-			if x < 0 {
-				x += bounds.Dx() - int(c.PointToFix32(fontMetrics.width)>>8)
-			}
-			if y < 0 {
-				y += bounds.Dy() - int(c.PointToFix32(fontMetrics.height)>>8)
-			}
+			width := int(c.PointToFix32(fontMetrics.width) >> 8)
+			height := int(c.PointToFix32(fontMetrics.height) >> 8)
+
+			pt := calculateTopLeftPointFromGravity(text.gravity, width, height, bounds.Dx(), bounds.Dy())
+			pt = pt.Add(getTranslation(text.gravity, text.x*scale, text.y*scale))
+			x := pt.X
+			y := pt.Y + int(c.PointToFix32(fontMetrics.ascent)>>8)
 
 			_, err := c.DrawString(text.content, freetype.Pt(x, y))
 			if err != nil {
@@ -239,7 +235,7 @@ func transformCropAndResize(img image.Image, transformation *Transformation) (im
 	return
 }
 
-func calculateTopLeftPointFromGravity(gravity string, width, height int, imgWidth, imgHeight int) image.Point {
+func calculateTopLeftPointFromGravity(gravity string, width, height, imgWidth, imgHeight int) image.Point {
 	// Assuming width <= imgWidth && height <= imgHeight
 	switch gravity {
 	case GravityNorth:
@@ -260,6 +256,32 @@ func calculateTopLeftPointFromGravity(gravity string, width, height int, imgWidt
 		return image.Point{0, 0}
 	case GravityCenter:
 		return image.Point{(imgWidth - width) / 2, (imgHeight - height) / 2}
+	}
+	panic("This point should not be reached")
+}
+
+// getTranslation returns a point specifying a translation by a given
+// horizontal and vertical offset according to gravity
+func getTranslation(gravity string, h, v int) image.Point {
+	switch gravity {
+	case GravityNorth:
+		return image.Point{0, v}
+	case GravityNorthEast:
+		return image.Point{-h, v}
+	case GravityEast:
+		return image.Point{-h, 0}
+	case GravitySouthEast:
+		return image.Point{-h, -v}
+	case GravitySouth:
+		return image.Point{0, -v}
+	case GravitySouthWest:
+		return image.Point{h, -v}
+	case GravityWest:
+		return image.Point{h, 0}
+	case GravityNorthWest:
+		return image.Point{h, v}
+	case GravityCenter:
+		return image.Point{0, 0}
 	}
 	panic("This point should not be reached")
 }
