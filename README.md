@@ -139,6 +139,8 @@ Pixlserv supports 2 types of underlying storage: local file system and Amazon S3
 [//]: # (TODO: more info)
 Other configuration options include `throttling-rate`, `allow-custom-transformations`, `allow-custom-scale`, `async-uploads`, `authorisation`, `cache`, `jpeg-quality`, `transformations` and `upload-max-file-size`. See [config/example.yaml](config/example.yaml) for an example.
 
+Configuration is kept in a [YAML](http://en.wikipedia.org/wiki/YAML) file. In some cases its syntax could be confusing if you haven't used YAML before so please refer to some online documentation. For example, hexadecimal colours need to be in quotes (as hash would start a comment otherwise). A string `n` specifying gravity could be interpreted as a shorthand for boolean `No` and so needs to be put in quotes too.
+
 ### Amazon S3
 
 To use Amazon S3 as your storage create a bucket and a user with access to the bucket and at least the following permissions: `s3:GetObject`, `s3:DeleteObject`, `s3:PutObject` and `s3:ListBucket`. Make sure to set up the environment variables mentioned above to make the server connect to S3 instead of using local storage.
