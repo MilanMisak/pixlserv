@@ -235,7 +235,7 @@ func transformationHandler(params martini.Params) (int, string) {
 
 	// Check if the image with the given parameters already exists
 	// and return it
-	fullImagePath, _ := createFilePath(baseImagePath, transformation.params)
+	fullImagePath, _ := transformation.createFilePath(baseImagePath)
 	img, format, err := loadFromCache(fullImagePath)
 	if err == nil {
 		var buffer bytes.Buffer
@@ -337,7 +337,7 @@ func uploadHandler(params martini.Params, uf UploadForm) (int, string) {
 		if len(Config.eagerTransformations) > 0 {
 			for _, transformation := range Config.eagerTransformations {
 				imgNew := transformCropAndResize(img, &transformation)
-				fullImagePath, _ := createFilePath(baseImagePath, transformation.params)
+				fullImagePath, _ := transformation.createFilePath(baseImagePath)
 				addToCache(fullImagePath, imgNew, format)
 			}
 		}

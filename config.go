@@ -238,7 +238,7 @@ func configInit(configFilePath string) error {
 					return fmt.Errorf("size needs to be at least 1")
 				}
 
-				t.texts = append(t.texts, &Text{content, gravity, x, y, size, font, color})
+				t.texts = append(t.texts, &Text{content, gravity, fontFilePath, x, y, size, font, color})
 			}
 		}
 
