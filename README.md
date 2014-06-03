@@ -269,3 +269,8 @@ A running [redis](http://redis.io/) instance is required for the server to be ab
 * Django, Rails support for generating image URLs on the server
 * GUI to manage images in the browser
 * a sample application
+
+
+## Changelog
+
+Have a look in a separate file: [CHANGELOG.md](CHANGELOG.md)
