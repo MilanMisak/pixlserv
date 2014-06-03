@@ -214,7 +214,6 @@ func (s *s3Storage) imageExists(imagePath string) bool {
 }
 
 // gcsStorage is a storage implementation using Google Cloud Storage
-
 type gcsStorage struct {
 	client  *http.Client
 	service *gcs.Service
