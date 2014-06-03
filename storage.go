@@ -4,11 +4,15 @@ import (
 	"bytes"
 	"fmt"
 	"image"
+	"io"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"code.google.com/p/goauth2/oauth/jwt"
+	gcs "code.google.com/p/google-api-go-client/storage/v1beta1"
 	"github.com/mitchellh/goamz/aws"
 	"github.com/mitchellh/goamz/s3"
 )
@@ -17,6 +21,10 @@ const (
 	awsKeyEnvVar    = "AWS_ACCESS_KEY_ID"
 	awsSecretEnvVar = "AWS_SECRET_ACCESS_KEY"
 	s3BucketEnvVar  = "PIXLSERV_S3_BUCKET"
+
+	gcsIssEnvVar    = "GCS_ISS"
+	gcsKeyEnvVar    = "GCS_KEY"
+	gcsBucketEnvVar = "PIXLSERV_GCS_BUCKET"
 )
 
 var (
@@ -39,6 +47,9 @@ func storageInit() error {
 	if os.Getenv(awsKeyEnvVar) != "" && os.Getenv(awsSecretEnvVar) != "" && os.Getenv(s3BucketEnvVar) != "" {
 		storageImpl = new(s3Storage)
 		log.Println("Using S3 storage")
+	} else if os.Getenv(gcsIssEnvVar) != "" && os.Getenv(gcsKeyEnvVar) != "" && os.Getenv(gcsBucketEnvVar) != "" {
+		storageImpl = new(gcsStorage)
+		log.Println("Using GCS storage")
 	} else {
 		storageImpl = new(localStorage)
 		log.Println("Using local storage")
@@ -200,4 +211,85 @@ func (s *s3Storage) imageExists(imagePath string) bool {
 	}
 
 	return false
+}
+
+// gcsStorage is a storage implementation using Google Cloud Storage
+type gcsStorage struct {
+	client  *http.Client
+	service *gcs.Service
+	bucket  string
+}
+
+func (s *gcsStorage) init() error {
+	jwtToken := jwt.NewToken(os.Getenv(gcsIssEnvVar), gcs.DevstorageRead_writeScope, []byte(os.Getenv(gcsKeyEnvVar)))
+	oauthToken, err := jwtToken.Assert(http.DefaultClient)
+	if err != nil {
+		return err
+	}
+
+	client := (&jwt.Transport{jwtToken, oauthToken, http.DefaultTransport}).Client()
+
+	service, err := gcs.New(client)
+	if err != nil {
+		return err
+	}
+
+	s.client = client
+	s.service = service
+	s.bucket = os.Getenv(gcsBucketEnvVar)
+
+	return nil
+}
+
+func (s *gcsStorage) loadImage(imagePath string) (image.Image, string, error) {
+	obj, err := s.service.Objects.Get(s.bucket, imagePath).Do()
+	if err != nil {
+		return nil, "", err
+	}
+
+	resp, err := s.client.Get(obj.Media.Link)
+	buf := &bytes.Buffer{}
+	_, err = io.Copy(buf, resp.Body)
+	if err != nil {
+		return nil, "", err
+	}
+	err = resp.Body.Close()
+	if err != nil {
+		return nil, "", err
+	}
+
+	format := strings.TrimLeft(filepath.Ext(imagePath), ".")
+	image, err := readImage(buf.Bytes(), format)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return image, format, nil
+}
+
+func (s *gcsStorage) saveImage(img image.Image, format string, imagePath string) (int, error) {
+	buffer := &bytes.Buffer{}
+	err := writeImage(img, format, buffer)
+	if err != nil {
+		return 0, err
+	}
+
+	size := buffer.Len()
+	_, err = s.service.Objects.Insert(s.bucket, &gcs.Object{Name: imagePath}).Media(buffer).Do()
+	if err != nil {
+		return 0, err
+	}
+	return size, err
+}
+
+func (s *gcsStorage) deleteImage(imagePath string) error {
+	return s.service.Objects.Delete(s.bucket, imagePath).Do()
+}
+
+func (s *gcsStorage) imageExists(imagePath string) bool {
+	obj, err := s.service.Objects.Get(s.bucket, imagePath).Do()
+	if err != nil {
+		return false
+	}
+	return obj != nil
 }

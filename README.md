@@ -4,11 +4,11 @@ A Go server for on-the-fly processing and serving of images. A self-hosted image
 
 1. Get the code and install the server
 
-2. Connect it to Amazon S3 or use local storage, connect it to redis
+2. Connect it to Amazon S3 or Google Cloud Storage or just use local storage, connect it to redis
 
 3. Start uploading and transforming images
 
-This is version 0.1. All feedback welcome: hello _at_ reshnesh _dot_ com
+This is version 0.1. All feedback welcome: hello@reshnesh.com
 
 
 ## Installation
@@ -58,11 +58,11 @@ This will run the server using a simple configuration defined in [config/example
 
 Assuming you copied a file `cat.jpg` to the `local-images` directory you can now access [http://localhost:3000/image/t_square/cat.jpg](http://localhost:3000/image/t_square/cat.jpg) using your browser.
 
-### Using pixlserv with Heroku
+### Using pixlserv with Heroku and Amazon S3
 
 Heroku is a popular platform-as-a-service (PaaS) provider so we will have a look at a more detailed description of how to make pixlserv work on Heroku's infrastructure.
 
-As Heroku uses an [ephemeral filesystem](https://devcenter.heroku.com/articles/dynos#ephemeral-filesystem) which doesn't allow persistent storage of data you will need to use Amazon S3. Please make sure you have a bucket and a user authorised to access the bucket using the instructions in the [Amazon S3](#amazon-s3) section below.
+As Heroku uses an [ephemeral filesystem](https://devcenter.heroku.com/articles/dynos#ephemeral-filesystem) which doesn't allow persistent storage of data you will need to use Amazon S3 or Google Cloud Storage. Please make sure you have a bucket and a user authorised to access the bucket using the instructions in the [Amazon S3](#amazon-s3) section below.
 
 Clone this repository somewhere on your disk. If you do not plan to run the server locally it doesn't need to be in Go's workspace.
 
@@ -134,7 +134,7 @@ Then restart the server and use the key as part of the URL you POST to (`http://
 
 ## Configuration
 
-Pixlserv supports 2 types of underlying storage: local file system and Amazon S3. If environment variables `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `PIXLSERV_S3_BUCKET` are detected the server will try to connect to S3 given the given credentials. Otherwise, local storage will be used. The path at which images will be stored locally can be specified using the `local-path` configuration option.
+Pixlserv supports 3 types of underlying storage: local file system, Amazon S3 and Google Cloud Storage. If environment variables `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `PIXLSERV_S3_BUCKET` are detected the server will try to connect to S3 given the given credentials. If not, it will try to look for `GCS_ISS`, `GCS_KEY` and `PIXLSERV_GCS_BUCKET` for use with Google Cloud Storage. If those are not found, local storage will be used. The path at which images will be stored locally can be specified using the `local-path` configuration option.
 
 [//]: # (TODO: more info)
 Other configuration options include `throttling-rate`, `allow-custom-transformations`, `allow-custom-scale`, `async-uploads`, `authorisation`, `cache`, `jpeg-quality`, `transformations` and `upload-max-file-size`. See [config/example.yaml](config/example.yaml) for an example.
@@ -158,6 +158,14 @@ The policy for an S3 user should contain something like this (where `<BUCKET>` i
 "Resource": [
     "arn:aws:s3:::<BUCKET>/*"
 ]
+```
+
+### Google Cloud Storage
+
+To use GCS as your storage backend you have to set up the 3 environment variables mentioned above. `GCS_ISS` is an email address for your service account and `GCS_KEY` is a private key (its entire content) that can be extracted from a .p12 file using a command like this:
+
+```
+openssl pkcs12 -in key.p12 -nocerts -passin pass:notasecret -nodes -out key.pem
 ```
 
 
