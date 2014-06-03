@@ -195,7 +195,7 @@ For some cropping modes gravity determines which part of the image will be shown
 | g_sw      | south west, bottom-left corner  |
 | g_w       | west, left edge                 |
 | g_nw      | north west, top-left corner     |
-| g_c       | center                          |
+| g_c       | centre                          |
 
 
 ### Filter/colouring
@@ -216,7 +216,31 @@ In your configuration file you can specify transformations using parameters desc
 
 Named transformations can also be set to be `eager`. Such transformations will be run for all images uploaded using the server straight after the upload happens.
 
-Another feature of named transformations are watermarks. Images can be automatically watermarked using an image stored along with all the other images locally or in S3. Please refer to the example config file for details. Note: if you supply scaled up watermarks (`watermark@2x.png`) these will be used for scaled images.
+Watermarks and text overlays (see next section) can be added to named transformations.
+
+
+### Watermarks and text overlays
+
+Images can have another image applied to them as a watermark or a custom text added using a text overlay.
+
+Both features require these configuration parameters:
+
+| Parameter | Explanation                                                                                  |
+| --------- | -------------------------------------------------------------------------------------------- |
+| source    | path to an image file stored in your configured file storage                                 |
+| gravity   | which edge or corner of the image should the position be calculated from                     |
+| x-pos     | offset along the x-axis from the edges of the image (not needed if gravity is `c` -- centre) |
+| y-pos     | offset along the x-axis from the edges of the image (not needed if gravity is `c` -- centre) |
+
+Text overlays additionally require these parameters:
+
+| Parameter | Explanation                                                                                        |
+| --------- | -------------------------------------------------------------------------------------------------- |
+| color     | hexadecimal representation of the text colour (in quotes because of YAML syntax!)                  |
+| font      | path to a truetype font to be used for the text, pixlserv comes with one at `fonts/DejaVuSans.ttf` |
+| size      | point size of the font at 72 DPI                                                                   |
+
+Note: if you supply scaled up watermarks (`watermark@2x.png`) these will be used for scaled images.
 
 
 ## Authentication
