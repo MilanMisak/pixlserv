@@ -8,6 +8,21 @@
 			"Rev": "fe6099d37e696d890913122ac72ba7b1cf5e34bd"
 		},
 		{
+			"ImportPath": "code.google.com/p/goauth2/oauth",
+			"Comment": "weekly-44",
+			"Rev": "696c088491246273e92442aa66b5281e5bb34faa"
+		},
+		{
+			"ImportPath": "code.google.com/p/google-api-go-client/googleapi",
+			"Comment": "release-84",
+			"Rev": "2ba9f0995cf0215c20ebd6de43a14d70af30fea6"
+		},
+		{
+			"ImportPath": "code.google.com/p/google-api-go-client/storage/v1beta1",
+			"Comment": "release-84",
+			"Rev": "2ba9f0995cf0215c20ebd6de43a14d70af30fea6"
+		},
+		{
 			"ImportPath": "github.com/PuerkitoBio/throttled",
 			"Rev": "65b17baf7dd2924b3085f66e4f5677e21cf76c06"
 		},
