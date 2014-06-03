@@ -54,6 +54,7 @@ type Params struct {
 
 // ToString turns parameters into a unique string for each possible assignment of parameters
 func (p Params) ToString() string {
+	// 0 as a value for width or height means that it will be calculated
 	return fmt.Sprintf("%s_%s,%s_%s,%s_%d,%s_%d,%s_%s,%s_%d", parameterCropping, p.cropping, parameterGravity, p.gravity, parameterHeight, p.height, parameterWidth, p.width, parameterFilter, p.filter, parameterScale, p.scale)
 }
 
@@ -81,7 +82,7 @@ func parseParameters(parametersStr string) (Params, error) {
 				return params, fmt.Errorf("could not parse value for parameter: %q", key)
 			}
 			if value <= 0 {
-				return params, fmt.Errorf("value %q must be > 0: %q", key, key)
+				return params, fmt.Errorf("value %d must be > 0: %q", value, key)
 			}
 			if key == parameterWidth {
 				params.width = value
@@ -113,6 +114,10 @@ func parseParameters(parametersStr string) (Params, error) {
 			}
 			params.filter = value
 		}
+	}
+
+	if params.width == 0 && params.height == 0 {
+		return params, fmt.Errorf("both width and height can't be 0")
 	}
 
 	return params, nil
