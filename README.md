@@ -165,44 +165,44 @@ The policy for an S3 user should contain something like this (where `<BUCKET>` i
 
 ### Resizing
 
-| Parameter | Meaning                       |
-| --------- | ----------------------------- |
-| h_X       | sets height of the image to X |
-| w_X       | sets width of the image to X  |
+| Parameter value | Meaning                       |
+| --------------- | ----------------------------- |
+| h_X             | sets height of the image to X |
+| w_X             | sets width of the image to X  |
 
 
 ### Cropping
 
-| Parameter | Meaning                                                                                                       |
-| --------- | ------------------------------------------------------------------------------------------------------------- |
-| c_e       | exact, image scaled exactly to given dimensions (default)                                                     |
-| c_a       | all, the whole image will be visible in a frame of given dimensions, retains proportions                      |
-| c_p       | part, part of the image will be visible in a frame of given dimensions, retains proportions, optional gravity |
-| c_k       | keep scale, original scale of the image preserved, optional gravity                                           |
+| Parameter value | Meaning                                                                                                       |
+| --------------- | ------------------------------------------------------------------------------------------------------------- |
+| c_e             | exact, image scaled exactly to given dimensions (default)                                                     |
+| c_a             | all, the whole image will be visible in a frame of given dimensions, retains proportions                      |
+| c_p             | part, part of the image will be visible in a frame of given dimensions, retains proportions, optional gravity |
+| c_k             | keep scale, original scale of the image preserved, optional gravity                                           |
 
 
 ### Gravity
 
 For some cropping modes gravity determines which part of the image will be shown.
 
-| Parameter | Meaning                         |
-| --------- | ------------------------------- |
-| g_n       | north, top edge                 |
-| g_ne      | north east, top-right corner    |
-| g_e       | east, right edge                |
-| g_se      | south east, bottom-right corner |
-| g_s       | south, bottom edge              |
-| g_sw      | south west, bottom-left corner  |
-| g_w       | west, left edge                 |
-| g_nw      | north west, top-left corner     |
-| g_c       | centre                          |
+| Parameter value | Meaning                         |
+| --------------- | ------------------------------- |
+| g_n             | north, top edge                 |
+| g_ne            | north east, top-right corner    |
+| g_e             | east, right edge                |
+| g_se            | south east, bottom-right corner |
+| g_s             | south, bottom edge              |
+| g_sw            | south west, bottom-left corner  |
+| g_w             | west, left edge                 |
+| g_nw            | north west, top-left corner     |
+| g_c             | centre                          |
 
 
 ### Filter/colouring
 
-| Parameter   | Meaning   |
-| ----------- | --------- |
-| f_grayscale | grayscale |
+| Parameter value | Meaning   |
+| --------------- | --------- |
+| f_grayscale     | grayscale |
 
 
 ### Scaling (retina)
@@ -225,12 +225,12 @@ Images can have another image applied to them as a watermark or a custom text ad
 
 Both features require these configuration parameters:
 
-| Parameter | Explanation                                                                                  |
-| --------- | -------------------------------------------------------------------------------------------- |
-| source    | path to an image file stored in your configured file storage                                 |
-| gravity   | which edge or corner of the image should the position be calculated from                     |
-| x-pos     | offset along the x-axis from the edges of the image (not needed if gravity is `c` -- centre) |
-| y-pos     | offset along the x-axis from the edges of the image (not needed if gravity is `c` -- centre) |
+| Parameter | Explanation                                                                        |
+| --------- | ---------------------------------------------------------------------------------- |
+| source    | path to an image file stored in your configured file storage                       |
+| gravity   | which edge or corner of the image should the position be calculated from           |
+| x-pos     | offset along the x-axis from the edges of the image (not needed if gravity is `c`) |
+| y-pos     | offset along the x-axis from the edges of the image (not needed if gravity is `c`) |
 
 Text overlays additionally require these parameters:
 
