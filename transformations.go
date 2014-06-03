@@ -3,10 +3,18 @@ package main
 // TODO - refactor out a resizing function
 
 import (
+	"encoding/binary"
+	"encoding/hex"
+	"fmt"
 	"image"
 	"image/color"
 	"image/draw"
+	"io"
 	"log"
+	"strconv"
+	"strings"
+
+	"crypto/sha1"
 
 	"code.google.com/p/freetype-go/freetype"
 	"code.google.com/p/freetype-go/freetype/truetype"
@@ -28,15 +36,84 @@ type Watermark struct {
 
 // Text specifies a text overlay to be applied to an image
 type Text struct {
-	content, gravity string
-	x, y, size       int
-	font             *truetype.Font
-	color            color.Color
+	content, gravity, fontFilePath string
+	x, y, size                     int
+	font                           *truetype.Font
+	color                          color.Color
 }
 
 // FontMetrics defines font metrics for a Text struct as rounded up integers
 type FontMetrics struct {
 	width, height, ascent, descent float64
+}
+
+// Turns an image file path and a transformation parameters into a file path combining both.
+// It can then be used for file lookups.
+// The function assumes that imagePath contains an extension at the end.
+func (t *Transformation) createFilePath(imagePath string) (string, error) {
+	i := strings.LastIndex(imagePath, ".")
+	if i == -1 {
+		return "", fmt.Errorf("invalid image path")
+	}
+
+	sum := make([]byte, sha1.Size)
+
+	// Watermark
+	if t.watermark != nil {
+		hash := t.watermark.Hash()
+		for i, _ := range sum {
+			sum[i] += hash[i]
+		}
+	}
+
+	// Texts
+	for _, elem := range t.texts {
+		hash := elem.Hash()
+		for i, _ := range sum {
+			sum[i] += hash[i]
+		}
+	}
+
+	extraHash := ""
+	if t.watermark != nil || len(t.texts) != 0 {
+		extraHash = "--" + hex.EncodeToString(sum)
+	}
+
+	return imagePath[:i] + "--" + t.params.ToString() + extraHash + "--" + imagePath[i:], nil
+}
+
+func (w *Watermark) Hash() []byte {
+	h := sha1.New()
+
+	io.WriteString(h, w.imagePath)
+	io.WriteString(h, w.gravity)
+	io.WriteString(h, strconv.Itoa(w.x))
+	io.WriteString(h, strconv.Itoa(w.y))
+
+	return h.Sum(nil)
+}
+
+func (t *Text) Hash() []byte {
+	h := sha1.New()
+	writeUint := func(i uint32) {
+		bs := make([]byte, 4)
+		binary.BigEndian.PutUint32(bs, i)
+		h.Write(bs)
+	}
+
+	r, g, b, a := t.color.RGBA()
+	io.WriteString(h, t.content)
+	io.WriteString(h, t.gravity)
+	io.WriteString(h, strconv.Itoa(t.x))
+	io.WriteString(h, strconv.Itoa(t.y))
+	io.WriteString(h, strconv.Itoa(t.size))
+	io.WriteString(h, t.fontFilePath)
+	writeUint(r)
+	writeUint(g)
+	writeUint(b)
+	writeUint(a)
+
+	return h.Sum(nil)
 }
 
 func (t *Text) GetFontMetrics(scale int) FontMetrics {
