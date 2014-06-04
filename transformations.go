@@ -60,16 +60,16 @@ func (t *Transformation) createFilePath(imagePath string) (string, error) {
 
 	// Watermark
 	if t.watermark != nil {
-		hash := t.watermark.Hash()
-		for i, _ := range sum {
+		hash := t.watermark.hash()
+		for i := range sum {
 			sum[i] += hash[i]
 		}
 	}
 
 	// Texts
 	for _, elem := range t.texts {
-		hash := elem.Hash()
-		for i, _ := range sum {
+		hash := elem.hash()
+		for i := range sum {
 			sum[i] += hash[i]
 		}
 	}
@@ -82,7 +82,7 @@ func (t *Transformation) createFilePath(imagePath string) (string, error) {
 	return imagePath[:i] + "--" + t.params.ToString() + extraHash + "--" + imagePath[i:], nil
 }
 
-func (w *Watermark) Hash() []byte {
+func (w *Watermark) hash() []byte {
 	h := sha1.New()
 
 	io.WriteString(h, w.imagePath)
@@ -93,7 +93,7 @@ func (w *Watermark) Hash() []byte {
 	return h.Sum(nil)
 }
 
-func (t *Text) Hash() []byte {
+func (t *Text) hash() []byte {
 	h := sha1.New()
 	writeUint := func(i uint32) {
 		bs := make([]byte, 4)
@@ -116,7 +116,7 @@ func (t *Text) Hash() []byte {
 	return h.Sum(nil)
 }
 
-func (t *Text) GetFontMetrics(scale int) FontMetrics {
+func (t *Text) getFontMetrics(scale int) FontMetrics {
 	// Adapted from: https://code.google.com/p/plotinum/
 
 	// Converts truetype.FUnit to float64
@@ -290,7 +290,7 @@ func transformCropAndResize(img image.Image, transformation *Transformation) (im
 			c.SetFont(text.font)
 			c.SetFontSize(size)
 
-			fontMetrics := text.GetFontMetrics(scale)
+			fontMetrics := text.getFontMetrics(scale)
 			width := int(c.PointToFix32(fontMetrics.width) >> 8)
 			height := int(c.PointToFix32(fontMetrics.height) >> 8)
 
