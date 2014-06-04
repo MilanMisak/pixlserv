@@ -8,7 +8,7 @@ A Go server for on-the-fly processing and serving of images. A self-hosted image
 
 3. Start uploading and transforming images
 
-This is version 0.1. All feedback welcome: hello@reshnesh.com
+This is version 0.2. All feedback welcome: hello@reshnesh.com
 
 
 ## Installation

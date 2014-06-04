@@ -219,20 +219,20 @@ func configInit(configFilePath string) error {
 					fontFilePath = defaultFontPath
 				}
 				if _, err := os.Stat(fontFilePath); os.IsNotExist(err) {
-					return fmt.Errorf("font does not exist:", fontFilePath)
+					return fmt.Errorf("font does not exist: %s", fontFilePath)
 				}
 				fontBytes, err := ioutil.ReadFile(fontFilePath)
 				if err != nil {
-					return fmt.Errorf("loading font failed:", err)
+					return fmt.Errorf("loading font failed: %s", err)
 				}
 				font, err := freetype.ParseFont(fontBytes)
 				if err != nil {
-					return fmt.Errorf("loading font failed:", err)
+					return fmt.Errorf("loading font failed: %s", err)
 				}
 
 				size, ok := text["size"].(int)
 				if !ok {
-					return fmt.Errorf("%v is not a valid size", text["size"])
+					return fmt.Errorf("%v is not a valid size %s", text["size"])
 				}
 				if size < 1 {
 					return fmt.Errorf("size needs to be at least 1")

@@ -1,4 +1,4 @@
-## 0.2 (not released yet)
+## 0.2
 
 Features:
 
