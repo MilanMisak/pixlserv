@@ -16,7 +16,7 @@ This is version 0.2. All feedback welcome: hello@reshnesh.com
 * [Installation](#installation)
 * [Usage](#usage)
   * [Using pixlserv locally](#using-pixlserv-locally)
-  * [Using pixlserv with Heroku and Amazon S3][#using-pixlserv-with-heroku-and-amazon-s3]
+  * [Using pixlserv with Heroku and Amazon S3](#using-pixlserv-with-heroku-and-amazon-s3)
 * [Configuration](#configuration)
   * [Amazon S3](#amazon-s3)
   * [Google Cloud Storage](#google-cloud-storage)
