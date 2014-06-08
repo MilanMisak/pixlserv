@@ -11,6 +11,29 @@ A Go server for on-the-fly processing and serving of images. A self-hosted image
 This is version 0.2. All feedback welcome: hello@reshnesh.com
 
 
+## Table of contents
+
+* [Installation](#installation)
+* [Usage](#usage)
+  * [Using pixlserv locally](#using-pixlserv-locally)
+  * [Using pixlserv with Heroku and Amazon S3][#using-pixlserv-with-heroku-and-amazon-s3]
+* [Configuration](#configuration)
+  * [Amazon S3](#amazon-s3)
+  * [Google Cloud Storage](#google-cloud-storage)
+* [Supported transformations](#supported-transformations)
+  * [Resizing](#resizing)
+  * [Cropping](#cropping)
+  * [Gravity](#gravity)
+  * [Filter/colouring](#filtercolouring)
+  * [Scaling (retina)](#scaling-retina)
+  * [Named transformations](#named-transformations)
+  * [Watermarks and text overlays](#watermarks-and-text-overlays)
+* [Authentication](#authentication)
+* [Requirements](#requirements)
+* [Future development](#future-development)
+* [Changelog](#changelog)
+
+
 ## Installation
 
 First get pixlserv's source code by either cloning this repository to your Go workspace:
