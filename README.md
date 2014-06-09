@@ -10,6 +10,8 @@ A Go server for on-the-fly processing and serving of images. A self-hosted image
 
 This is version 0.2. All feedback welcome: hello@reshnesh.com
 
+Please help me with my final year project by filling out a [quick survey](https://docs.google.com/forms/d/1BnkzF-KtW505FLjdVgfJ_ohAe8qxXWDPkmZ7_m3158I/viewform). Thank you.
+
 
 ## Table of contents
 
