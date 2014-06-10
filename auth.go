@@ -61,14 +61,34 @@ func hasPermission(key, permission string) bool {
 	return false
 }
 
-func generateKey() (string, error) {
+func generateKey() (string, string, error) {
 	key := uuid.NewV4().String()
+	secretKey := uuid.NewV4().String()
 	_, err := Conn.Do("SADD", "api-keys", key)
+	if err != nil {
+		return "", "", err
+	}
+	_, err = Conn.Do("HSET", "key:"+key, "secret", secretKey)
+	if err != nil {
+		return "", "", err
+	}
+	_, err = Conn.Do("SADD", "key:"+key+":permissions", GetPermission, UploadPermission)
+	return key, secretKey, err
+}
+
+func generateSecret(key string) (string, error) {
+	err := checkKeyExists(key)
 	if err != nil {
 		return "", err
 	}
-	_, err = Conn.Do("SADD", "key:"+key, GetPermission, UploadPermission)
-	return key, err
+
+	secretKey := uuid.NewV4().String()
+	_, err = Conn.Do("HSET", "key:"+key, "secret", secretKey)
+	if err != nil {
+		return "", err
+	}
+
+	return secretKey, nil
 }
 
 func infoAboutKey(key string) ([]string, error) {
@@ -76,7 +96,7 @@ func infoAboutKey(key string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	permissions, err := redis.Strings(Conn.Do("SMEMBERS", "key:"+key))
+	permissions, err := redis.Strings(Conn.Do("SMEMBERS", "key:"+key+":permissions"))
 	if err != nil {
 		return nil, err
 	}
@@ -100,9 +120,9 @@ func modifyKey(key, op, permission string) error {
 		return fmt.Errorf("modifier needs to end with a valid permission: %s or %s", GetPermission, UploadPermission)
 	}
 	if op == "add" {
-		_, err = Conn.Do("SADD", "key:"+key, permission)
+		_, err = Conn.Do("SADD", "key:"+key+":permissions", permission)
 	} else {
-		_, err = Conn.Do("SREM", "key:"+key, permission)
+		_, err = Conn.Do("SREM", "key:"+key+":permissions", permission)
 	}
 	return err
 }
@@ -116,7 +136,7 @@ func removeKey(key string) error {
 	if err != nil {
 		return err
 	}
-	_, err = Conn.Do("DEL", "key:"+key)
+	_, err = Conn.Do("DEL", "key:"+key+":permissions")
 	return err
 }
 

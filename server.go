@@ -125,13 +125,30 @@ func main() {
 					Name:  "add",
 					Usage: "Adds a new one",
 					Action: func(c *cli.Context) {
-						key, err := generateKey()
+						key, secretKey, err := generateKey()
 						if err != nil {
 							log.Println("Adding a new API key failed, please try again")
 							return
 						}
 
-						log.Println("Key added:", key)
+						log.Printf("Key added: %s, secret: %s", key, secretKey)
+					},
+				},
+				{
+					Name:  "generatesecret",
+					Usage: "Generates a new secret key for a given API key (generatesecret [key])",
+					Action: func(c *cli.Context) {
+						if len(c.Args()) < 1 {
+							log.Println("You need to provide an existing key")
+							return
+						}
+						key := c.Args().First()
+						secret, err := generateSecret(key)
+						if err != nil {
+							log.Println(err.Error())
+							return
+						}
+						log.Printf("The new secret is: %s. Please save it now.", secret)
 					},
 				},
 				{
