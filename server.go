@@ -328,27 +328,32 @@ func uploadHandler(params martini.Params, uf UploadForm) (int, string) {
 		return http.StatusBadRequest, uploadError("missing image field")
 	}
 
-	uploadTime := time.Unix(uf.Timestamp, 0)
-	delta := time.Since(uploadTime).Minutes()
-	if delta < 0 || delta > 5 {
-		return http.StatusBadRequest, uploadError("invalid timestamp")
-	}
+	// Check signature only when API key is used
+	// Note: when no API key is passed in but required for uploads, the above
+	// hasPermission check should fail
+	if params["apikey"] != "" {
+		uploadTime := time.Unix(uf.Timestamp, 0)
+		delta := time.Since(uploadTime).Minutes()
+		if delta < 0 || delta > 5 {
+			return http.StatusBadRequest, uploadError("invalid timestamp")
+		}
 
-	queryParams := make(map[string]string)
-	queryParams["timestamp"] = strconv.FormatInt(uf.Timestamp, 10)
-	if uf.Callback != "" {
-		queryParams["callback"] = uf.Callback
-	}
-	if uf.Filename != "" {
-		queryParams["filename"] = uf.Filename
-	}
+		queryParams := make(map[string]string)
+		queryParams["timestamp"] = strconv.FormatInt(uf.Timestamp, 10)
+		if uf.Callback != "" {
+			queryParams["callback"] = uf.Callback
+		}
+		if uf.Filename != "" {
+			queryParams["filename"] = uf.Filename
+		}
 
-	secret, err := getSecretForKey(params["apikey"])
-	if err != nil {
-		return http.StatusBadRequest, uploadError("authorization error")
-	}
-	if !isValidSignature(uf.Signature, secret, queryParams) {
-		return http.StatusBadRequest, uploadError("invalid signature")
+		secret, err := getSecretForKey(params["apikey"])
+		if err != nil {
+			return http.StatusBadRequest, uploadError("authorization error")
+		}
+		if !isValidSignature(uf.Signature, secret, queryParams) {
+			return http.StatusBadRequest, uploadError("invalid signature")
+		}
 	}
 
 	file, err := uf.PhotoUpload.Open()
