@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/signal"
 	"regexp"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -27,7 +28,11 @@ import (
 
 // UploadForm is a form structure to use when an image is POSTed to the server
 type UploadForm struct {
-	PhotoUpload *multipart.FileHeader `form:"image"`
+	PhotoUpload *multipart.FileHeader `form:"image" binding:"required"`
+	Timestamp   int64                 `form:"timestamp" binding:"required"`
+	Filename    string                `form:"filename"`
+	Callback    string                `form:"callback"`
+	Signature   string                `form:"signature" binding:"required"`
 }
 
 var (
@@ -323,6 +328,29 @@ func uploadHandler(params martini.Params, uf UploadForm) (int, string) {
 		return http.StatusBadRequest, uploadError("missing image field")
 	}
 
+	uploadTime := time.Unix(uf.Timestamp, 0)
+	delta := time.Since(uploadTime).Minutes()
+	if delta < 0 || delta > 5 {
+		return http.StatusBadRequest, uploadError("invalid timestamp")
+	}
+
+	queryParams := make(map[string]string)
+	queryParams["timestamp"] = strconv.FormatInt(uf.Timestamp, 10)
+	if uf.Callback != "" {
+		queryParams["callback"] = uf.Callback
+	}
+	if uf.Filename != "" {
+		queryParams["filename"] = uf.Filename
+	}
+
+	secret, err := getSecretForKey(params["apikey"])
+	if err != nil {
+		return http.StatusBadRequest, uploadError("authorization error")
+	}
+	if !isValidSignature(uf.Signature, secret, queryParams) {
+		return http.StatusBadRequest, uploadError("invalid signature")
+	}
+
 	file, err := uf.PhotoUpload.Open()
 	if err != nil {
 		return http.StatusBadRequest, uploadError(err.Error())
@@ -345,8 +373,9 @@ func uploadHandler(params martini.Params, uf UploadForm) (int, string) {
 	defer file.Close()
 
 	// Not a big fan of .jpeg file extensions
+	now := time.Now()
 	randomInt := rand.Intn(1000)
-	baseImagePath := fmt.Sprintf("%d-%d.%s", time.Now().Unix(), randomInt, strings.Replace(format, "jpeg", "jpg", 1))
+	baseImagePath := fmt.Sprintf("%d-%d.%s", now.Unix(), randomInt, strings.Replace(format, "jpeg", "jpg", 1))
 	log.Printf("Uploading %s", baseImagePath)
 
 	// Eager transformations
