@@ -31,6 +31,7 @@ Please help me with my final year project by filling out a [quick survey](https:
   * [Named transformations](#named-transformations)
   * [Watermarks and text overlays](#watermarks-and-text-overlays)
 * [Authentication](#authentication)
+* [Uploads](#uploads)
 * [Requirements](#requirements)
 * [Future development](#future-development)
 * [Changelog](#changelog)
@@ -281,6 +282,15 @@ Note: if you supply scaled up watermarks (`watermark@2x.png`) these will be used
 The server can be set up to require an API key to be passed as part of the URL when requesting or uploading an image. This is done in the `authorisation` section of a configuration file.
 
 API keys can be added, removed and modified by running `./pixlserv api-key COMMAND`. Run this without `COMMAND` to see all the available commands. Once API keys are modified, the server needs to be restarted to use the new settings.
+
+
+## Uploads
+
+The server supports image uploads if the request is properly authenticated (unless authentication is not required for uploads in the current configuration).
+
+For the URL you need to post to refer to the Usage section above.
+
+The POST request has to include an `image` field with the image. Additionally, `timestamp` and `signature` fields need to be provided if authentication for uploads is set up. `timestamp` is a UNIX timestamp in seconds which when received by the server should be no more than 5 minutes old. `signature` is a lowercase hex-encoded [HMAC-SHA256](http://en.wikipedia.org/wiki/Hash-based_message_authentication_code#Examples_of_HMAC_.28MD5.2C_SHA1.2C_SHA256.29) value (without the leading `0x`) created from the string `timestamp=???` (where `???` is the UNIX timestamp as mentioned before) and a secret key generated when creating an API key.
 
 
 ## Requirements

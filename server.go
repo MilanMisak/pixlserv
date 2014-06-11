@@ -30,8 +30,6 @@ import (
 type UploadForm struct {
 	PhotoUpload *multipart.FileHeader `form:"image" binding:"required"`
 	Timestamp   int64                 `form:"timestamp" binding:"required"`
-	Filename    string                `form:"filename"`
-	Callback    string                `form:"callback"`
 	Signature   string                `form:"signature" binding:"required"`
 }
 
@@ -340,12 +338,6 @@ func uploadHandler(params martini.Params, uf UploadForm) (int, string) {
 
 		queryParams := make(map[string]string)
 		queryParams["timestamp"] = strconv.FormatInt(uf.Timestamp, 10)
-		if uf.Callback != "" {
-			queryParams["callback"] = uf.Callback
-		}
-		if uf.Filename != "" {
-			queryParams["filename"] = uf.Filename
-		}
 
 		secret, err := getSecretForKey(params["apikey"])
 		if err != nil {
