@@ -300,7 +300,6 @@ A running [redis](http://redis.io/) instance is required for the server to be ab
 
 ## Future development
 
-* better authentication for uploads
 * a Javascript library for easier uploads from the browser
 * Django, Rails support for generating image URLs on the server
 * GUI to manage images in the browser
