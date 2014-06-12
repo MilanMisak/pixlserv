@@ -1,3 +1,9 @@
+## 0.3
+
+Features:
+
+- uploads need to be signed using a secret key (when authentication is configured to be required for uploads)
+
 ## 0.2
 
 Features:
