@@ -22,11 +22,11 @@ Please help me with my final year project by filling out a [quick survey](https:
 * [Configuration](#configuration)
   * [Amazon S3](#amazon-s3)
   * [Google Cloud Storage](#google-cloud-storage)
-* [Supported transformations](#supported-transformations)
+* [Transformations](#transformations)
   * [Resizing](#resizing)
   * [Cropping](#cropping)
   * [Gravity](#gravity)
-  * [Filter/colouring](#filtercolouring)
+  * [Filters/colouring](#filterscolouring)
   * [Scaling (retina)](#scaling-retina)
   * [Named transformations](#named-transformations)
   * [Watermarks and text overlays](#watermarks-and-text-overlays)
@@ -195,7 +195,7 @@ openssl pkcs12 -in key.p12 -nocerts -passin pass:notasecret -nodes -out key.pem
 ```
 
 
-## Supported transformations
+## Transformations
 
 ### Resizing
 
@@ -229,10 +229,10 @@ For some cropping modes gravity determines which part of the image will be shown
 | g_sw            | south west, bottom-left corner  |
 | g_w             | west, left edge                 |
 | g_nw            | north west, top-left corner     |
-| g_c             | centre                          |
+| g_c             | center                          |
 
 
-### Filter/colouring
+### Filters/colouring
 
 | Parameter value | Meaning   |
 | --------------- | --------- |
@@ -264,7 +264,7 @@ Both features require these configuration parameters:
 | source    | path to an image file stored in your configured file storage                       |
 | gravity   | which edge or corner of the image should the position be calculated from           |
 | x-pos     | offset along the x-axis from the edges of the image (not needed if gravity is `c`) |
-| y-pos     | offset along the x-axis from the edges of the image (not needed if gravity is `c`) |
+| y-pos     | offset along the y-axis from the edges of the image (not needed if gravity is `c`) |
 
 Text overlays additionally require these parameters:
 
