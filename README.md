@@ -219,17 +219,17 @@ openssl pkcs12 -in key.p12 -nocerts -passin pass:notasecret -nodes -out key.pem
 
 For some cropping modes gravity determines which part of the image will be shown.
 
-| Parameter value | Meaning                         |
-| --------------- | ------------------------------- |
-| g_n             | north, top edge                 |
-| g_ne            | north east, top-right corner    |
-| g_e             | east, right edge                |
-| g_se            | south east, bottom-right corner |
-| g_s             | south, bottom edge              |
-| g_sw            | south west, bottom-left corner  |
-| g_w             | west, left edge                 |
-| g_nw            | north west, top-left corner     |
-| g_c             | center                          |
+| Parameter value | Meaning                               |
+| --------------- | ------------------------------------- |
+| g_n             | north, top edge                       |
+| g_ne            | north east, top-right corner          |
+| g_e             | east, right edge                      |
+| g_se            | south east, bottom-right corner       |
+| g_s             | south, bottom edge                    |
+| g_sw            | south west, bottom-left corner        |
+| g_w             | west, left edge                       |
+| g_nw            | north west, top-left corner (default) |
+| g_c             | center                                |
 
 
 ### Filters/colouring
