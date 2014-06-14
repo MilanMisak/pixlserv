@@ -25,12 +25,13 @@ func redisInit() error {
 	if url != "" {
 		Conn, err = redisurl.ConnectToURL(url)
 	} else {
-		port, err := strconv.Atoi(os.Getenv(redisPortEnvVar))
-		if err != nil {
+		port, errLocal := strconv.Atoi(os.Getenv(redisPortEnvVar))
+		if errLocal != nil {
 			port = redisDefaultPort
 		}
 
-		Conn, err = redis.Dial("tcp", ":"+strconv.Itoa(port))
+		Conn, errLocal = redis.Dial("tcp", ":"+strconv.Itoa(port))
+		err = errLocal
 	}
 	return err
 }

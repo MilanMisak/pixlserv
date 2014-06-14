@@ -50,6 +50,7 @@ func main() {
 	err := redisInit()
 	if err != nil {
 		log.Println("Connecting to redis failed", err)
+		return
 	}
 
 	app := cli.NewApp()
