@@ -134,7 +134,7 @@ func main() {
 							return
 						}
 
-						log.Printf("Key added: %s, secret: %s", key, secretKey)
+						log.Printf("Key added: %s, secret: %s\nPlease save these now!", key, secretKey)
 					},
 				},
 				{
