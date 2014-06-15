@@ -16,6 +16,9 @@ throttling-rate: 10
 # Max file size for uploads in bytes (5 MB by default)
 upload-max-file-size: 10485760 # 10 MB
 
+# Max number of pixels an image can have (5 megapixels by default)
+upload-max-pixels: 8000000
+
 # Which operations need an API key with suitable permissions (none by default)
 authorisation:
     get:    No

@@ -24,6 +24,7 @@ const (
 	defaultCacheLimit                 = 0  // No. of bytes
 	defaultJpegQuality                = 75
 	defaultUploadMaxFileSize          = 5 * 1024 * 1024 // No. of bytes
+	defaultUploadMaxPixels            = 5000000         // 5 megapixels
 	defaultAllowCustomTransformations = true
 	defaultAllowCustomScale           = true
 	defaultAsyncUploads               = false
@@ -41,7 +42,7 @@ var (
 
 // Configuration specifies server configuration options
 type Configuration struct {
-	throttlingRate, cacheLimit, jpegQuality, uploadMaxFileSize                                  int
+	throttlingRate, cacheLimit, jpegQuality, uploadMaxFileSize, uploadMaxPixels                 int
 	allowCustomTransformations, allowCustomScale, asyncUploads, authorisedGet, authorisedUpload bool
 	localPath, cacheStrategy                                                                    string
 	transformations                                                                             map[string]Transformation
@@ -49,7 +50,7 @@ type Configuration struct {
 }
 
 func configInit(configFilePath string) error {
-	Config = Configuration{defaultThrottlingRate, defaultCacheLimit, defaultJpegQuality, defaultUploadMaxFileSize, defaultAllowCustomTransformations, defaultAllowCustomScale, defaultAsyncUploads, defaultAuthorisedGet, defaultAuthorisedUpload, defaultLocalPath, defaultCacheStrategy, make(map[string]Transformation), make([]Transformation, 0)}
+	Config = Configuration{defaultThrottlingRate, defaultCacheLimit, defaultJpegQuality, defaultUploadMaxFileSize, defaultUploadMaxPixels, defaultAllowCustomTransformations, defaultAllowCustomScale, defaultAsyncUploads, defaultAuthorisedGet, defaultAuthorisedUpload, defaultLocalPath, defaultCacheStrategy, make(map[string]Transformation), make([]Transformation, 0)}
 
 	if configFilePath == "" {
 		return nil
@@ -76,6 +77,11 @@ func configInit(configFilePath string) error {
 	uploadMaxFileSize, ok := m["upload-max-file-size"].(int)
 	if ok && uploadMaxFileSize > 0 {
 		Config.uploadMaxFileSize = uploadMaxFileSize
+	}
+
+	uploadMaxPixels, ok := m["upload-max-pixels"].(int)
+	if ok && uploadMaxPixels > 0 {
+		Config.uploadMaxPixels = uploadMaxPixels
 	}
 
 	allowCustomTransformations, ok := m["allow-custom-transformations"].(bool)
