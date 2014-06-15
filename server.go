@@ -24,6 +24,7 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/binding"
+	"github.com/tgulacsi/agostle/temp"
 )
 
 // UploadForm is a form structure to use when an image is POSTed to the server
@@ -354,7 +355,23 @@ func uploadHandler(params martini.Params, uf UploadForm) (int, string) {
 		return http.StatusBadRequest, uploadError(err.Error())
 	}
 
-	limit := io.LimitReader(file, int64(Config.uploadMaxFileSize+1))
+	reader, err := temp.NewReadSeeker(file, 0)
+	if err != nil {
+		return http.StatusBadRequest, uploadError(err.Error())
+	}
+
+	c, _, err := image.DecodeConfig(reader)
+	if err != nil {
+		return http.StatusBadRequest, uploadError(err.Error())
+	}
+	reader.Seek(0, 0)
+
+	pixels := c.Width * c.Height
+	if pixels > Config.uploadMaxPixels {
+		return http.StatusBadRequest, uploadError(fmt.Sprintf("too many pixels: %d, allowed: %d", pixels, Config.uploadMaxPixels))
+	}
+
+	limit := io.LimitReader(reader, int64(Config.uploadMaxFileSize+1))
 	data, err := ioutil.ReadAll(limit)
 	if err != nil {
 		return http.StatusBadRequest, uploadError(err.Error())
