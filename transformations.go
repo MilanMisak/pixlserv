@@ -171,7 +171,6 @@ func transformCropAndResize(img image.Image, transformation *Transformation) (im
 			imgNew = resize.Resize(uint(width), 0, img, resize.Bilinear)
 		}
 	case CroppingModePart:
-		// Use the top left part of the image for now
 		var croppedRect image.Rectangle
 		if float32(width)*(float32(imgHeight)/float32(imgWidth)) > float32(height) {
 			// Whole width displayed
