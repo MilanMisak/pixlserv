@@ -24,6 +24,7 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/binding"
+	"github.com/martini-contrib/cors"
 	"github.com/tgulacsi/agostle/temp"
 )
 
@@ -105,6 +106,11 @@ func main() {
 						res.Header().Set("Content-Type", "application/json")
 					}
 				})
+				if Config.corsAllowOrigins != nil {
+					m.Use(cors.Allow(&cors.Options{
+						AllowOrigins: Config.corsAllowOrigins,
+					}))
+				}
 				m.Get("/", func() string {
 					return "It works!"
 				})

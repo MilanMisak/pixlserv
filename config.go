@@ -45,12 +45,13 @@ type Configuration struct {
 	throttlingRate, cacheLimit, jpegQuality, uploadMaxFileSize, uploadMaxPixels                 int
 	allowCustomTransformations, allowCustomScale, asyncUploads, authorisedGet, authorisedUpload bool
 	localPath, cacheStrategy                                                                    string
+	corsAllowOrigins                                                                            []string
 	transformations                                                                             map[string]Transformation
 	eagerTransformations                                                                        []Transformation
 }
 
 func configInit(configFilePath string) error {
-	Config = Configuration{defaultThrottlingRate, defaultCacheLimit, defaultJpegQuality, defaultUploadMaxFileSize, defaultUploadMaxPixels, defaultAllowCustomTransformations, defaultAllowCustomScale, defaultAsyncUploads, defaultAuthorisedGet, defaultAuthorisedUpload, defaultLocalPath, defaultCacheStrategy, make(map[string]Transformation), make([]Transformation, 0)}
+	Config = Configuration{defaultThrottlingRate, defaultCacheLimit, defaultJpegQuality, defaultUploadMaxFileSize, defaultUploadMaxPixels, defaultAllowCustomTransformations, defaultAllowCustomScale, defaultAsyncUploads, defaultAuthorisedGet, defaultAuthorisedUpload, defaultLocalPath, defaultCacheStrategy, nil, make(map[string]Transformation), make([]Transformation, 0)}
 
 	if configFilePath == "" {
 		return nil
@@ -63,6 +64,9 @@ func configInit(configFilePath string) error {
 
 	m := make(map[interface{}]interface{})
 	err = yaml.Unmarshal([]byte(data), &m)
+	if err != nil {
+		return err
+	}
 
 	throttlingRate, ok := m["throttling-rate"].(int)
 	if ok && throttlingRate >= 0 {
@@ -127,6 +131,18 @@ func configInit(configFilePath string) error {
 		if ok && (strategy == LRU || strategy == LFU) {
 			Config.cacheStrategy = strategy
 		}
+	}
+
+	corsAllowOrigins, ok := m["cors-allow-origins"].([]interface{})
+	if ok {
+		allowOrigins := make([]string, 0)
+		for _, origin := range corsAllowOrigins {
+			originStr, ok := origin.(string)
+			if ok {
+				allowOrigins = append(allowOrigins, originStr)
+			}
+		}
+		Config.corsAllowOrigins = allowOrigins
 	}
 
 	transformations, ok := m["transformations"].([]interface{})
