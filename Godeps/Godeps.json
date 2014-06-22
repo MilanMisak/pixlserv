@@ -57,6 +57,10 @@
 			"Rev": "3c6304eca9089d5f082b80bf6bbcb8ce1c34c040"
 		},
 		{
+			"ImportPath": "github.com/martini-contrib/cors",
+			"Rev": "a88ecdc4d47e8263f8b4383068edd82aa44800c3"
+		},
+		{
 			"ImportPath": "github.com/mitchellh/goamz/aws",
 			"Rev": "87d3f9ee12e143e7fb718e1ab0a2dddeb4bd0e26"
 		},
