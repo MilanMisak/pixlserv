@@ -1,4 +1,5 @@
 package uuid
+
 /****************
  * Date: 14/02/14
  * Time: 9:08 PM
@@ -20,7 +21,7 @@ var state_bytes = []byte{
 }
 
 func TestUUID_StateSeed(t *testing.T) {
-	if state.past < Timestamp((1391463463*10000000) + (100*10) + gregorianToUNIXOffset) {
+	if state.past < Timestamp((1391463463*10000000)+(100*10)+gregorianToUNIXOffset) {
 		t.Errorf("Expected a value greater than 02/03/2014 @ 9:37pm in UTC but got %d", state.past)
 	}
 	if state.node == nil {
@@ -33,11 +34,11 @@ func TestUUID_StateSeed(t *testing.T) {
 
 func TestUUIDState_read(t *testing.T) {
 	s := new(State)
-	s.past = Timestamp((1391463463*10000000) + (100*10) + gregorianToUNIXOffset)
+	s.past = Timestamp((1391463463*10000000)+(100*10)+gregorianToUNIXOffset)
 	s.node = state_bytes
 
-	now := Timestamp((1391463463*10000000) + (100*10))
-	s.read(now + (100*10), make([]byte, length))
+	now := Timestamp((1391463463 * 10000000) + (100 * 10))
+	s.read(now+(100*10), make([]byte, length))
 
 	if s.sequence != 1 {
 		t.Error("The sequence should increment when the time is" +
@@ -52,7 +53,7 @@ func TestUUIDState_read(t *testing.T) {
 	}
 
 	s = new(State)
-	s.past = Timestamp((1391463463*10000000) + (100*10) + gregorianToUNIXOffset)
+	s.past = Timestamp((1391463463*10000000)+(100*10)+gregorianToUNIXOffset)
 	s.node = state_bytes
 	s.randomSequence = true
 	s.read(now, make([]byte, length))
@@ -81,20 +82,23 @@ func TestUUIDState_init(t *testing.T) {
 // Tests that the schedule is run approx every ten seconds
 // takes 90 seconds to complete on my machine at 90000000 UUIDs
 func TestUUIDState_saveSchedule(t *testing.T) {
-	count := 0
-	now := time.Now()
-	state.next = timestamp()
-	for i := 0; i < 30000000; i++ {
-		now = time.Now()
-		NewV1()
-		if lastTimestamp >= state.next {
-			count++
+	if V1Save {
+		count := 0
+		now := time.Now()
+		NewV1() // prime scheduler
+		state.next = timestamp()
+		for i := 0; i < 10000000; i++ {
+			stamp := timestamp()
+			if stamp >= state.next {
+				count++
+			}
+			NewV1()
 		}
-	}
-	d := time.Since(now)
-	tenSec := int(d.Seconds())/10
-	if count != tenSec {
-		t.Error("Should be as many saves as ten second increments but got: %s instead of %s", count, tenSec)
+		d := time.Since(now)
+		tenSec := int(d.Seconds()) / int(SaveSchedule) + 1
+		if count != tenSec {
+			t.Errorf("Should be as many saves as ten second increments but got: %d instead of %d", count, tenSec)
+		}   // TODO fix extra save
 	}
 }
 

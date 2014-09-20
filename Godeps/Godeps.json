@@ -77,12 +77,12 @@
 			"Rev": "ac42ec99510b5f21d11560d316adcc5bc41f0915"
 		},
 		{
-			"ImportPath": "github.com/tgulacsi/agostle/temp",
-			"Rev": "bce9ed10d33b78c47668cfc8e8372e85d2133535"
+			"ImportPath": "github.com/tgulacsi/go/temp",
+			"Rev": "92c7276d8a682303af6d305b74e06ab253bb3815"
 		},
 		{
 			"ImportPath": "github.com/twinj/uuid",
-			"Rev": "32b0afc3a40d23189f42d9a9fe441251386b99e3"
+			"Rev": "4d772442af203e27723acc7d1eea6c93cd319c57"
 		},
 		{
 			"ImportPath": "gopkg.in/yaml.v1",

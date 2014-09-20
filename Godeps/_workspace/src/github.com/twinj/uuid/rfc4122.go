@@ -1,4 +1,5 @@
 package uuid
+
 /***************
  * Date: 14/02/14
  * Time: 7:44 PM
@@ -44,8 +45,8 @@ var (
 )
 
 func init() {
-	seed.Seed((int64(timestamp()) ^ int64(gregorianToUNIXOffset))*0x6ba7b814<<0x6ba7b812 | 1391463463)
-	state = State{randomNode: true, randomSequence: true, past: Timestamp((1391463463*10000000) + (100*10) + gregorianToUNIXOffset), node: nodeId, sequence: uint16(seed.Int()) & 0x3FFF }
+	seed.Seed((int64(timestamp()) ^ int64(gregorianToUNIXOffset)) * 0x6ba7b814 << 0x6ba7b812 | 1391463463)
+	state = State{randomNode: true, randomSequence: true, past: Timestamp((1391463463*10000000)+(100*10)+gregorianToUNIXOffset), node: nodeId, sequence: uint16(seed.Int())&0x3FFF }
 	state.init()
 }
 
@@ -53,9 +54,8 @@ func init() {
 func NewV1() UUID {
 	runtime.LockOSThread()
 	now := currentUUIDTimestamp()
-	node := currentUUIDNodeId()
-	state.read(now, node)
-	state.save()
+	state.read(now, currentUUIDNodeId())
+	state.persist()
 	runtime.UnlockOSThread()
 	return formatV1(now, 1, ReservedRFC4122, state.node)
 }
@@ -102,7 +102,7 @@ func NewV5(pNs UUID, pName UniqueName) UUID {
 // the pre initialised one
 func currentUUIDNodeId() (node net.HardwareAddr) {
 	if state.randomNode {
-		b := make([]byte, 16 + 6)
+		b := make([]byte, 16+6)
 		_, err := rand.Read(b)
 		if err != nil {
 			log.Println("UUID.currentUUIDNodeId error:", err)
@@ -130,8 +130,8 @@ func getHardwareAddress(pInterfaces []net.Interface) net.HardwareAddr {
 	for _, inter := range pInterfaces {
 		// Initially I could multicast out the Flags to get
 		// whether the interface was up but started failing
-		if (inter.Flags & (1<<net.FlagUp)) != 0  {
-		//if inter.Flags.String() != "0" {
+		if (inter.Flags&(1<<net.FlagUp)) != 0 {
+			//if inter.Flags.String() != "0" {
 			if addrs, err := inter.Addrs(); err == nil {
 				for _, addr := range addrs {
 					if addr.String() != "0.0.0.0" && !bytes.Equal(inter.HardwareAddr, make([]byte, len(inter.HardwareAddr))) {
@@ -148,11 +148,11 @@ func getHardwareAddress(pInterfaces []net.Interface) net.HardwareAddr {
 func formatV1(pNow Timestamp, pVersion uint16, pVariant byte, pNode []byte) UUID {
 	o := new(UUIDStruct)
 	o.timeLow = uint32(pNow & 0xFFFFFFFF)
-	o.timeMid = uint16((pNow>>32) & 0xFFFF)
-	o.timeHiAndVersion = uint16((pNow>>48) & 0x0FFF)
-	o.timeHiAndVersion |= uint16(pVersion<<12)
+	o.timeMid = uint16((pNow >> 32) & 0xFFFF)
+	o.timeHiAndVersion = uint16((pNow >> 48) & 0x0FFF)
+	o.timeHiAndVersion |= uint16(pVersion << 12)
 	o.sequenceLow = byte(state.sequence & 0xFF)
-	o.sequenceHiAndVariant = byte(( state.sequence & 0x3F00)>>8)
+	o.sequenceHiAndVariant = byte(( state.sequence & 0x3F00) >> 8)
 	o.sequenceHiAndVariant |= pVariant
 	o.node = pNode
 	o.size = length

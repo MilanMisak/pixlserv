@@ -1,12 +1,9 @@
 package uuid
+
 /****************
  * Date: 1/02/14
  * Time: 10:08 AM
  ***************/
-
-import (
-	"fmt"
-)
 
 const (
 	variantIndex = 8
@@ -21,7 +18,7 @@ func (UUIDArray) Size() int {
 }
 
 func (o UUIDArray) Version() int {
-	return int(o[versionIndex])>>4
+	return int(o[versionIndex]) >> 4
 }
 
 func (o *UUIDArray) setVersion(pVersion int) {
@@ -46,7 +43,11 @@ func (o *UUIDArray) Bytes() []byte {
 }
 
 func (o UUIDArray) String() string {
-	return fmt.Sprintf(format, o[0:4], o[4:6], o[6:8], o[8:9], o[9:10], o[10:o.Size()])
+	return formatter(&o, format)
+}
+
+func (o UUIDArray) Format(pFormat Format) string {
+	return formatter(&o, pFormat)
 }
 
 // Set the three most significant bits (bits 0, 1 and 2) of the

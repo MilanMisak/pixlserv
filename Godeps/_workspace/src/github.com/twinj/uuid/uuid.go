@@ -6,7 +6,7 @@
 // and 5 UUIDs as specified in RFC 4122.
 //
 // New([]byte), unsafe NewHex(string) and safe ParseUUID(string) for
-// creating UUIDs from exisiting data
+// creating UUIDs from existing data
 //
 // The original version was from Krzysztof Kowalik <chris@nu7hat.ch>
 // Although his version was non compliant with RFC4122 and bugged.
@@ -15,6 +15,7 @@
 // as such I have started a new repository.
 //  Copyright (C) 2014 twinj@github.com  2014 MIT style licence
 package uuid
+
 /****************
  * Date: 31/01/14
  * Time: 3:35 PM
@@ -23,6 +24,7 @@ package uuid
 import (
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"hash"
 	"regexp"
 	seed "math/rand"
@@ -49,11 +51,11 @@ const (
 
 var (
 	parseUUIDRegex = regexp.MustCompile(hexPattern)
-	format string
+	format Format
 )
 
 func init() {
-	SwitchFormat(CurlyHyphen, true)
+	SwitchFormatUpper(CurlyHyphen)
 }
 
 // ******************************************************  UUID
@@ -119,11 +121,11 @@ func GoId(pNs UUID, pName UniqueName, pHash hash.Hash) UUID {
 // Unmarshals data into struct for GoId UUIDs
 func formatGoId(o *UUIDStruct, pNow Timestamp, pVersion uint16, pVariant byte, pSequence uint16) UUID {
 	o.timeLow = uint32(pNow & 0xFFFFFFFF)
-	o.timeMid = uint16((pNow>>32) & 0xFFFF)
-	o.timeHiAndVersion = uint16((pNow>>48) & 0x0FFF)
-	o.timeHiAndVersion |= uint16(pVersion<<12)
+	o.timeMid = uint16((pNow >> 32) & 0xFFFF)
+	o.timeHiAndVersion = uint16((pNow >> 48) & 0x0FFF)
+	o.timeHiAndVersion |= uint16(pVersion << 12)
 	o.sequenceLow = byte(pSequence & 0xFF)
-	o.sequenceHiAndVariant = byte(( pSequence & 0x3F00)>>8)
+	o.sequenceHiAndVariant = byte(( pSequence & 0x3F00) >> 8)
 	o.sequenceHiAndVariant |= pVariant
 	return o
 }
@@ -151,15 +153,12 @@ func ParseUUID(pUUID string) (UUID, error) {
 	if md == nil {
 		return nil, errors.New("UUID.ParseUUID: invalid string")
 	}
-	return NewHex(md[2] + md[3] + md[4] + md[5] + md[6]), nil
+	return NewHex(md[2]+md[3]+md[4]+md[5]+md[6]), nil
 }
 
 // Digest a namespace UUID and a UniqueName, which then  marshals to
 // a new UUID
 func Digest(o, pNs UUID, pName UniqueName, pHash hash.Hash) {
-	if (o == nil || pNs == nil || pName == nil || pHash == nil) {
-		panic("UUID.Digest: nil parameters")
-	}
 	// Hash writer never returns an error
 	pHash.Write(pNs.Bytes())
 	pHash.Write([]byte(pName.String()))
@@ -208,49 +207,37 @@ type UniqueName interface {
 
 // **********************************************  UUID Printing
 
-type UUIDFormat int
+type Format string
 
 const (
-	Clean UUIDFormat = iota
-	Curly
-	Bracket
-	CleanHyphen
-	CurlyHyphen
-	BracketHyphen
-	GoIdFormat
+	Clean Format         = "%x%x%x%x%x%x"
+	Curly Format         = "{%x%x%x%x%x%x}"
+	Bracket Format       = "(%x%x%x%x%x%x)"
+	CleanHyphen Format   = "%x-%x-%x-%x%x-%x"
+	CurlyHyphen Format   = "{%x-%x-%x-%x%x-%x}"
+	BracketHyphen Format = "(%x-%x-%x-%x%x-%x)"
+	GoIdFormat Format    = "[%X-%X-%x-%X%X-%x]"
 )
 
 // Switches the printing format for UUID strings
 // When String() is called it will get the current format
 // Default is CurlyHyphen
 // A valid format will have 6 groups
-func SwitchFormat(pFormat UUIDFormat, pUpperCase bool) {
-	switch pFormat {
-	case Clean:
-		format = "%x%x%x%x%x%x"
-	case Curly:
-		format = "{%x%x%x%x%x%x}"
-	case Bracket:
-		format = "(%x%x%x%x%x%x)"
-	case CleanHyphen:
-		format = "%x-%x-%x-%x%x-%x"
-	case CurlyHyphen:
-		format = "{%x-%x-%x-%x%x-%x}"
-	case BracketHyphen:
-		format = "(%x-%x-%x-%x%x-%x)"
-	case GoIdFormat:
-		format = "[%X-%X-%x-%X%X-%x]"
-		pUpperCase = false
-	default:
-		format = "%x-%x-%x-%x%x-%x"
+func SwitchFormat(pFormat Format) {
+	if (strings.Count(string(pFormat), "%") != 6) {
+		panic(errors.New("UUID.SwitchFormat: invalid formatting"))
 	}
-	if (pUpperCase) {
-		format = strings.ToUpper(format)
-	}
+	format = pFormat
 }
 
-// Gets the current format string
-func GetFormat() string {
+// Same as SwitchFormat but will make it uppercase: will ruin GoId
+// formatting
+func SwitchFormatUpper(pFormat Format) {
+	SwitchFormat(Format(strings.ToUpper(string(pFormat))))
+}
+
+// Gets the current default format string
+func GetFormat() Format {
 	return format
 }
 
@@ -287,7 +274,7 @@ func variant(pVariant byte) byte {
 	return ReservedNCS
 }
 
-// not strictly required but have kept for reference
+// not strictly required
 func setVariant(pByte *byte, pVariant byte) {
 	switch pVariant {
 	case ReservedRFC4122:
@@ -301,6 +288,21 @@ func setVariant(pByte *byte, pVariant byte) {
 	}
 	*pByte |= pVariant;
 }
+
+// format a UUID into a human readable string
+func formatter(pUUID UUID, pFormat Format) string {
+	b := pUUID.Bytes()
+	return fmt.Sprintf(string(pFormat), b[0:4], b[4:6], b[6:8], b[8:9], b[9:10], b[10:pUUID.Size()])
+}
+
+// Format a UUID into a human readable string
+func Formatter(pUUID UUID, pFormat Format) string {
+	if (strings.Count(string(pFormat), "%") != 6) {
+		panic(errors.New("UUID.SwitchFormat: invalid formatting"))
+	}
+	return formatter(pUUID, pFormat)
+}
+
 
 
 

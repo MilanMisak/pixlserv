@@ -1,4 +1,5 @@
 package uuid
+
 /****************
  * Date: 14/02/14
  * Time: 7:43 PM
@@ -14,11 +15,24 @@ import (
 )
 
 var (
-	Report bool
+	// Print save log
+	Report = false
+
+	// Save every x seconds
+	SaveSchedule uint64 = 10
+
+	V1SaveState = SaveStateOS{}
+)
+
+const (
+	// If true uuid V1 will save state in a temp dir
+	V1Save = true
 )
 
 func init() {
-	gob.Register(stateEntity{})
+	if V1Save {
+		gob.Register(stateEntity{})
+	}
 }
 
 // **************************************************** State
@@ -48,8 +62,8 @@ type State struct {
 	// values across the same domain
 	sequence           uint16
 
-	// file to save state
-	check *os.File
+	// save state interface
+	SaveState
 }
 
 // Changes the state with current data
@@ -59,7 +73,7 @@ type State struct {
 // else if there is an issue with the time the sequence is incremeted
 func (o *State) read(pNow Timestamp, pNode net.HardwareAddr) {
 	if bytes.Equal(pNode, o.node) || o.randomSequence {
-		o.sequence = uint16(seed.Int()) & 0x3FFF
+		o.sequence = uint16(seed.Int())&0x3FFF
 	} else if pNow < o.past {
 		o.sequence ++
 	}
@@ -67,80 +81,40 @@ func (o *State) read(pNow Timestamp, pNode net.HardwareAddr) {
 	o.node = pNode
 }
 
-// Saves the current state of the generator
-// If the scheduled file save is reached then the file is synced
-func (o *State) save() {
-	if o.past >= o.next {
-		var err error
-		o.check, err = os.OpenFile("uuid" + "/" + "state.unique", os.O_RDWR, os.ModeExclusive)
-		defer o.check.Close()
-		if err != nil {
-			log.Println("UUID.State.save:", err)
-			return
+func (o *State) persist() {
+	if V1Save {
+		if !V1SaveState.Setup() {
+			V1SaveState.Init(o)
 		}
-		// do the save
-		o.encode()
-		// schedule next save for 10 seconds from now
-		o.next = o.past + 10*ticksPerSecond
-		if Report {
-			log.Printf("UUID STATE: SAVED %d", o.past)
-		}
+		o.Save(o)
 	}
 }
 
 // Initialises the UUID state when the package is first loaded
 // it first attempts to decode the file state into State
 // if this file does not exist it will create the file and do a flush
-// of the random state which gets loaded at packarge runtime
+// of the random state which gets loaded at package runtime
 // second it will attempt to resolve the current hardware address nodeId
 // thirdly it will check the state of the clock
 func (o *State) init() {
-	var err error
-	o.check, err = os.OpenFile("uuid" + "/" + "state.unique", os.O_RDWR, os.ModeExclusive)
-	defer o.check.Close()
-	if err != nil {
-		if os.IsNotExist(err) {
-			log.Printf("'%s' %s created\n", "uuid/", "UUIDState")
-			os.Mkdir("uuid" + "/", os.ModeDir | 0755)
-			o.check, err = os.Create("uuid" + "/" + "state.unique")
-			if err != nil {
-				log.Println("UUID.State.init: file error:", err)
-				goto nodeId
-			}
-			o.encode()
-		} else {
-			log.Println("UUID.State.init: file error:", err)
-			goto nodeId
-		}
+	if V1Save {
+		o.randomSequence = false
 	}
-	err = o.decode()
-	if err != nil {
-		goto nodeId
-	}
-	o.randomSequence = false
-nodeId:
-{
 	intfcs, err := net.Interfaces()
 	if err != nil {
 		log.Println("UUID.State.init: address error:", err)
-		goto pastInit
+		return
 	}
 	a := getHardwareAddress(intfcs)
 	if a == nil {
 		log.Println("UUID.State.init: address error:", err)
-		goto pastInit
+		return
 	}
-	if bytes.Equal(a, o.node) {
-		o.sequence ++
+	if bytes.Equal(a, state.node) {
+		state.sequence ++
 	}
-	o.node = a
-	o.randomNode = false
-}
-pastInit:
-	if timestamp() <= o.past {
-		o.sequence ++
-	}
-	o.next = state.past
+	state.node = a
+	state.randomNode = false
 }
 
 // ***********************************************  StateEntity
@@ -152,31 +126,116 @@ type stateEntity struct {
 	Sequence   uint16
 }
 
+type SaveState interface {
+	// Init is run if Setup() is false
+	// Init should setup the system to save the state
+	Init(*State)
+
+	// Save saves the state and is called only if const V1Save and
+	// Setup() is true
+	Save(*State)
+
+	// Should return whether Saving has been initialised.
+	Setup() bool
+}
+
+type SaveStateOS struct {
+	cache     *os.File
+	saveState uint64
+	setup     bool
+}
+
+func (o *SaveStateOS) Setup() bool {
+	return o.setup
+}
+
+// Saves the current state of the generator
+// If the scheduled file save is reached then the file is synced
+func (o *SaveStateOS) Save(pState *State) {
+	if pState.past >= pState.next {
+		err := o.open()
+		defer o.cache.Close()
+		if err != nil {
+			log.Println("UUID.State.save:", err)
+			return
+		}
+		// do the save
+		o.encode(pState)
+		schedule := Timestamp(SaveSchedule)
+		// default: schedule next save for 10 seconds from now
+		pState.next = pState.past+schedule*ticksPerSecond
+		if Report {
+			log.Printf("UUID STATE: SAVED %d", pState.past)
+		}
+	}
+}
+
+func (o *SaveStateOS) Init(pState *State) {
+	pState.SaveState = o
+	err := o.open()
+	defer o.cache.Close()
+	if err != nil {
+		if os.IsNotExist(err) {
+			log.Printf("'%s' created\n", "UUID.SaveState")
+			var err error
+			o.cache, err = os.Create(os.TempDir()+"/state.unique")
+			if err != nil {
+				log.Println("UUID.State.init: SaveState error:", err)
+				goto pastInit
+			}
+			o.encode(pState)
+		} else {
+			log.Println("UUID.State.init: SaveState error:", err)
+			goto pastInit
+		}
+	}
+	err = o.decode(pState)
+	if err != nil {
+		goto pastInit
+	}
+	pState.randomSequence = false
+pastInit:
+	if timestamp() <= pState.past {
+		pState.sequence ++
+	}
+	pState.next = state.past
+	o.setup = true
+}
+
+func (o *SaveStateOS) reset() {
+	o.cache.Seek(0, 0)
+}
+
+func (o *SaveStateOS) open() error {
+	var err error
+	o.cache, err = os.OpenFile(os.TempDir()+"/state.unique", os.O_RDWR, os.ModeExclusive)
+	return err
+}
+
 // Encodes State generator data into a saved file
-func (o *State) encode() {
-	// ensure at beginning of file - cause overwrite of old state
-	o.check.Seek(0, 0)
-	enc := gob.NewEncoder(o.check)
+func (o *SaveStateOS) encode(pState *State) {
+	// ensure reader state is ready for use
+	o.reset()
+	enc := gob.NewEncoder(o.cache)
 	// Wrap private State data into the StateEntity
-	entity := stateEntity{state.past, state.node, state.sequence}
-	err := enc.Encode(&entity)
+	err := enc.Encode(&stateEntity{pState.past, pState.node, pState.sequence})
 	if err != nil {
 		log.Panic("UUID.encode error:", err)
 	}
 }
 
 // Decodes StateEntity data into the main State
-func (o *State) decode() error {
-	o.check.Seek(0, 0)
-	dec := gob.NewDecoder(o.check)
+func (o *SaveStateOS) decode(pState *State) error {
+	o.reset()
+	dec := gob.NewDecoder(o.cache)
 	entity := stateEntity{}
 	err := dec.Decode(&entity)
 	if err != nil {
 		log.Println("UUID.decode error:", err)
 		return err
 	}
-	o.past = entity.Past
-	o.node = entity.Node
-	o.sequence = entity.Sequence
+	pState.past = entity.Past
+	pState.node = entity.Node
+	pState.sequence = entity.Sequence
 	return nil
 }
