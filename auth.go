@@ -25,7 +25,7 @@ var (
 
 func init() {
 	// Change the UUID format to remove surrounding braces and dashes
-	uuid.SwitchFormat(uuid.Clean, true)
+	uuid.SwitchFormat(uuid.Clean)
 }
 
 func authInit() error {
