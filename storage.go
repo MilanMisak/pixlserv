@@ -20,6 +20,7 @@ const (
 	awsKeyEnvVar    = "AWS_ACCESS_KEY_ID"
 	awsSecretEnvVar = "AWS_SECRET_ACCESS_KEY"
 	s3BucketEnvVar  = "PIXLSERV_S3_BUCKET"
+	s3RegionEnvVar  = "PIXLSERV_S3_REGION"
 
 	gcsIssEnvVar    = "GCS_ISS"
 	gcsKeyEnvVar    = "GCS_KEY"
@@ -157,7 +158,13 @@ func (s *s3Storage) init() error {
 		return fmt.Errorf("%s not set", s3BucketEnvVar)
 	}
 
-	conn := s3.New(auth, aws.EUWest)
+	regionName := os.Getenv(s3RegionEnvVar)
+	region, ok := aws.Regions[regionName]
+	if !ok {
+		region = aws.EUWest
+	}
+
+	conn := s3.New(auth, region)
 	s.bucket = conn.Bucket(bucketName)
 
 	return nil
