@@ -161,7 +161,7 @@ func (s *s3Storage) init() error {
 	regionName := os.Getenv(s3RegionEnvVar)
 	region, ok := aws.Regions[regionName]
 	if !ok {
-		region = aws.USEast
+		region = aws.EUWest
 	}
 
 	conn := s3.New(auth, region)

@@ -186,6 +186,8 @@ The policy for an S3 user should contain something like this (where `<BUCKET>` i
 ]
 ```
 
+By default, the EU West AWS region is used when connecting to S3. You can override this by setting the `PIXLSERV_S3_REGION` environment variable to values described [here](https://godoc.org/launchpad.net/goamz/aws) (region names).
+
 ### Google Cloud Storage
 
 To use GCS as your storage backend you have to set up the 3 environment variables mentioned above. `GCS_ISS` is an email address for your service account and `GCS_KEY` is a private key (its entire content) that can be extracted from a .p12 file using a command like this:
