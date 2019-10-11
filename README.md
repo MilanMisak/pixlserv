@@ -1,5 +1,9 @@
 # Pixlserv
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/MilanMisak/pixlserv)](https://goreportcard.com/report/github.com/MilanMisak/pixlserv)
+[![GoDoc](https://godoc.org/github.com/MilanMisak/pixlserv?status.svg)](https://godoc.org/github.com/MilanMisak/pixlserv)
+[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+
 A Go server for on-the-fly processing and serving of images. A self-hosted image management solution for websites and mobile apps.
 
 1. Get the code and install the server
