@@ -12,10 +12,7 @@ A Go server for on-the-fly processing and serving of images. A self-hosted image
 
 3. Start uploading and transforming images
 
-This is version 0.4. All feedback welcome: hello@reshnesh.com
-
-Please help me with my final year project by filling out a [quick survey](https://docs.google.com/forms/d/1BnkzF-KtW505FLjdVgfJ_ohAe8qxXWDPkmZ7_m3158I/viewform). Thank you.
-
+This project is not actively developed.
 
 ## Table of contents
 
